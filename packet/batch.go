@@ -20,5 +20,7 @@ func (pkt BatchPacket) Save(out packed.Output) {
 	}
 }
 
-func (pkt BatchPacket) PacketId() PacketId           { return IdBatch }
-func (pkt BatchPacket) Check(ctx *ParseContext) bool { return true }
+func (pkt BatchPacket) PacketId() PacketId { return IdBatch }
+func (pkt BatchPacket) Check(pctx *ParseContext) bool {
+	return pctx.Check(InternalSide, uint16(len(pkt.Packets))*8+256)
+}
