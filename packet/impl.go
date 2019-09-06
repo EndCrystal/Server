@@ -18,11 +18,14 @@ type Packet interface {
 	Check(ctx *ParseContext) bool
 }
 
+const NetworkVersion uint32 = 0x01
+
 type PacketId uint8
 
 const (
-	IdBatch = 0xFF
-	IdLogin = 0x01
+	IdBatch  = 0xFF
+	IdLogin  = 0x01
+	IdLogout = 0x02
 )
 
 type ParseContext struct {

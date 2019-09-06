@@ -1,6 +1,7 @@
 package packet
 
 import (
+	"errors"
 	"time"
 
 	packed "github.com/EndCrystal/PackedIO"
@@ -17,12 +18,19 @@ type LoginPacket struct {
 	raw   []byte
 }
 
+var ENetworkVersionMismatched = errors.New("Network version mismatched")
+
 func (pkt *LoginPacket) Load(in packed.Input) {
+	nv := in.ReadVarUint32()
+	if nv != NetworkVersion {
+		panic(ENetworkVersionMismatched)
+	}
 	in.ReadFixedBytes(pkt.token[:])
 	pkt.raw = in.ReadBytes()
 }
 
 func (pkt LoginPacket) Save(out packed.Output) {
+	out.WriteVarUint32(NetworkVersion)
 	out.WriteFixedBytes(pkt.token[:])
 	out.WriteBytes(pkt.raw)
 }
