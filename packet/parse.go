@@ -14,7 +14,11 @@ func Parse(in packed.Input, ctx *ParseContext) (pkt Packet) {
 	id := PacketId(in.ReadUint8())
 	switch id {
 	case IdBatch:
-		pkt = &BatchPacket{}
+		pkt = &BatchPacket{ctx, nil}
+	case IdLogin:
+		pkt = new(LoginPacket)
+	case IdDisconnect:
+		pkt = new(DisconnectPacket)
 	default:
 		panic(EUnknownPacket)
 	}

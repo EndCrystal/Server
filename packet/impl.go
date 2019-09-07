@@ -23,9 +23,9 @@ const NetworkVersion uint32 = 0x01
 type PacketId uint8
 
 const (
-	IdBatch  = 0xFF
-	IdLogin  = 0x01
-	IdLogout = 0x02
+	IdBatch      PacketId = 0xFF
+	IdLogin               = 0x01
+	IdDisconnect          = 0x02
 )
 
 type ParseContext struct {
