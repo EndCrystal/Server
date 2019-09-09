@@ -8,7 +8,7 @@ import (
 )
 
 type PacketSender interface {
-	SendPacket(pkt packet.Packet)
+	SendPacket(pkt packet.Packet) error
 }
 
 type PacketBroadcaster interface {
@@ -18,11 +18,12 @@ type PacketBroadcaster interface {
 type ClientInstance interface {
 	PacketSender
 	GetFetcher() <-chan packet.Packet
+	Disconnect()
 }
 
 type Server interface {
-	PacketBroadcaster
 	GetFetcher() <-chan ClientInstance
+	Stop()
 }
 
 var EInvalidScheme = errors.New("Invalid scheme")
