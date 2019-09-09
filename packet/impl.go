@@ -26,6 +26,7 @@ const (
 	IdBatch      PacketId = 0xFF
 	IdLogin               = 0x01
 	IdDisconnect          = 0x02
+	IdChunkData           = 0x03
 )
 
 type ParseContext struct {

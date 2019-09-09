@@ -8,6 +8,18 @@ import (
 	"github.com/EndCrystal/Server/world/block"
 )
 
+type ChunkPos struct{ X, Z int32 }
+
+func (cp *ChunkPos) Load(in packed.Input) {
+	cp.X = in.ReadInt32()
+	cp.Z = in.ReadInt32()
+}
+
+func (cp ChunkPos) Save(out packed.Output) {
+	out.WriteInt32(cp.X)
+	out.WriteInt32(cp.Z)
+}
+
 type BlockPos uint16
 
 func Pos(x, y, z uint8) BlockPos {
