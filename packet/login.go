@@ -72,4 +72,6 @@ func (pkt LoginPacket) Read() (payload LoginPayload, ok bool) {
 
 func (pkt LoginPacket) PacketId() PacketId { return IdLogin }
 
-func (pkt LoginPacket) Check(pctx *ParseContext) bool { return pctx.Check(ClientSide, 1024) }
+func (pkt LoginPacket) Check(pctx *ParseContext) bool {
+	return pctx.Check(ClientSide, 1024+uint16(len(pkt.raw)))
+}
