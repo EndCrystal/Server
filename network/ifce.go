@@ -39,8 +39,8 @@ var registry map[string]ServerCreator
 
 type ServerCreator func(*url.URL) (Server, error)
 
-type PluginHost struct{}
+type PluginNetworkHost struct{}
 
-func (PluginHost) RegisterNetworkProtocol(name string, fn ServerCreator) {
+func (PluginNetworkHost) RegisterNetworkProtocol(name string, fn ServerCreator) {
 	registry[name] = fn
 }
