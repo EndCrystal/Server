@@ -6,11 +6,15 @@ import (
 
 	packed "github.com/EndCrystal/PackedIO"
 	"github.com/EndCrystal/Server/token"
+	"github.com/EndCrystal/Server/world/actor/builtin"
 )
 
 type LoginPayload struct {
+	ServerId string
 	Username string
 	Time     time.Time
+	builtin.Position
+	builtin.Rotation
 }
 
 type LoginPacket struct {
@@ -37,8 +41,11 @@ func (pkt LoginPacket) Save(out packed.Output) {
 
 func (pkt *LoginPacket) Write(payload LoginPayload, gen token.TokenGenerator) {
 	out, buf := packed.NewOutput()
+	out.WriteString(payload.ServerId)
 	out.WriteString(payload.Username)
 	out.WriteInt64(payload.Time.Unix())
+	payload.SavePosition(out)
+	payload.SaveRotation(out)
 	pkt.raw = buf.Bytes()
 	gen(pkt.raw, pkt.token)
 }
@@ -55,8 +62,11 @@ func (pkt LoginPacket) Read() (payload LoginPayload, ok bool) {
 		}
 	}()
 	in := packed.InputFromBuffer(pkt.raw)
+	payload.ServerId = in.ReadString()
 	payload.Username = in.ReadString()
 	payload.Time = time.Unix(in.ReadInt64(), 0)
+	payload.LoadPosition(in)
+	payload.LoadRotation(in)
 	return
 }
 
