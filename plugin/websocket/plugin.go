@@ -70,6 +70,8 @@ var opts = &websocket.AcceptOptions{
 	InsecureSkipVerify: true,
 }
 
+type privdata = struct{}
+
 func handler(res http.ResponseWriter, req *http.Request) {
 	var c *websocket.Conn
 	var err error
@@ -80,7 +82,7 @@ func handler(res http.ResponseWriter, req *http.Request) {
 	}
 	defer c.Close(websocket.StatusInternalError, "fallthrough")
 	ctx, cancel := context.WithCancel(req.Context())
-	ch := ctx.Value(creator).(chan network.ClientInstance)
+	ch := ctx.Value(privdata{}).(chan network.ClientInstance)
 	pktch := make(chan packet.Packet)
 	ch <- Client{c, pktch, cancel}
 	for {
@@ -119,7 +121,7 @@ func creator(u *url.URL) (network.Server, error) {
 	case "ws+unix":
 		listener, err = net.Listen("unix", u.EscapedPath())
 	case "ws":
-		listener, err = net.Listen("tcp", u.Hostname())
+		listener, err = net.Listen("tcp", u.Hostname()+":"+u.Port())
 		usePath = true
 	default:
 		return nil, ESchemeError
@@ -135,7 +137,7 @@ func creator(u *url.URL) (network.Server, error) {
 		server.Handler = http.HandlerFunc(handler)
 	}
 	ch := make(chan network.ClientInstance)
-	ctx := context.WithValue(context.Background(), creator, ch)
+	ctx := context.WithValue(context.Background(), privdata{}, ch)
 	server.BaseContext = func(net.Listener) context.Context { return ctx }
 	go server.Serve(listener)
 	return Server{server, ch}, nil
