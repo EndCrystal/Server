@@ -35,6 +35,10 @@ func processClient(instance network.ClientInstance) {
 	if err != nil {
 		panic(err)
 	}
+	global.users.Store(state.username, instance)
+	defer func() {
+		global.users.Delete(state.username)
+	}()
 	fetcher := instance.GetFetcher()
 	for packet := range fetcher {
 		processPacket(instance, &state, packet)

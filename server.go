@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/EndCrystal/Server/logprefix"
@@ -21,10 +22,13 @@ type ChatMessage struct {
 	Message string
 }
 
-var global struct {
+type Global struct {
 	verfier token.TokenVerifier
 	chat    chan<- ChatMessage
+	users   *sync.Map
 }
+
+var global Global
 
 var log = logprefix.Get("[main] ")
 
@@ -41,7 +45,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to load pubkey: %v", err)
 	}
-	// TODO: global.chat
+	global.users = new(sync.Map)
+	handleChat(global)
 
 	var server network.Server
 	var endpoint_url *url.URL
