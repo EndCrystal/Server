@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/EndCrystal/Server/logprefix"
 	"github.com/EndCrystal/Server/network"
@@ -52,6 +53,8 @@ func main() {
 var endpoint = flag.String("endpoint", "ws://0.0.0.0:2480", "Server Endpoint")
 var plugin_home = flag.String("plugin-dirs", "plugins:"+filepath.Join(os.Getenv("HOME"), ".local", "share", "EndCrystal", "plugins"), "Plugin directories")
 var pubkey_path = flag.String("pubkey", "key.pub", "Path to server pubkey")
+var server_id = flag.String("server-id", "default", "Server Id")
+var connection_timeout = flag.Duration("verify-timeout", time.Second*10, "Timeout for verify login packet")
 
 func loadPubKey() (verifier token.TokenVerifier, err error) {
 	log := logprefix.Get("[pubkey loader] ")
