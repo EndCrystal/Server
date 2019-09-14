@@ -25,7 +25,7 @@ func main() {
 	LogPrefix("[main] ")
 	var err error
 	flag.Parse()
-	err = loadPluginFromMulti(append(strings.Split(*plugin_home, ":"), filepath.Join(os.Getenv("HOME"), ".local", "share", "EndCrystal", "plugins"))...)
+	err = loadPluginFromMulti(strings.Split(*plugin_home, ":")...)
 	if err != nil {
 		log.Fatalf("Failed to load plugins: %v", err)
 	}
@@ -51,7 +51,7 @@ func main() {
 }
 
 var endpoint = flag.String("endpoint", "ws://0.0.0.0:2480", "Server Endpoint")
-var plugin_home = flag.String("plugin-dirs", "plugins", "Plugin directories")
+var plugin_home = flag.String("plugin-dirs", "plugins:"+filepath.Join(os.Getenv("HOME"), ".local", "share", "EndCrystal", "plugins"), "Plugin directories")
 var pubkey_path = flag.String("pubkey", "key.pub", "Path to server pubkey")
 
 func loadPubKey() (verifier token.TokenVerifier, err error) {
