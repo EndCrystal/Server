@@ -3,6 +3,7 @@ package plug
 import (
 	"errors"
 	"fmt"
+	"log"
 	"plugin"
 )
 
@@ -47,6 +48,7 @@ func LoadPlugin(path string, pifce PluginInterface) error {
 		return EInvalidPlugin{err}
 	}
 	LoadedPlugins[name] = p
+	log.Printf("Loaded %s plugin", name)
 	return nil
 }
 

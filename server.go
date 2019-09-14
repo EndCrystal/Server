@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -12,10 +13,24 @@ import (
 
 func main() {
 	var err error
-	err = loadPluginFrom("plugins")
+	flag.Parse()
+	err = loadPluginFromMulti(append(strings.Split(*plugin_home, ":"), filepath.Join(os.Getenv("HOME"), ".local", "share", "EndCrystal", "plugins"))...)
 	if err != nil {
 		log.Fatalf("Failed to load plugins: %v", err)
 	}
+}
+
+var endpoint = flag.String("endpoint", "ws://0.0.0.0:2480", "Server Endpoint")
+var plugin_home = flag.String("plugin-dirs", "plugins", "Plugin directories")
+
+func loadPluginFromMulti(roots ...string) (err error) {
+	for _, root := range roots {
+		err = loadPluginFrom(root)
+		if err != nil {
+			return
+		}
+	}
+	return
 }
 
 func loadPluginFrom(root string) (err error) {
@@ -29,7 +44,7 @@ func loadPluginFrom(root string) (err error) {
 		}
 	}()
 	var plugin_count int
-	err = filepath.Walk("plugins", func(path string, info os.FileInfo, err error) error {
+	err = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -49,8 +64,13 @@ func loadPluginFrom(root string) (err error) {
 		return nil
 	})
 	if err != nil {
+		if os.IsNotExist(err) {
+			log.Printf("Skipped loading plugins from %s", root)
+			err = nil
+			return
+		}
 		return
 	}
-	log.Printf("Loaded %d plugins", plugin_count)
+	log.Printf("Loaded %d plugins from %s", plugin_count, root)
 	return
 }

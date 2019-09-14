@@ -11,4 +11,4 @@ function do_build() (
 )
 do_build websocket
 cd ..
-go run ..
+go run .. "$@"
