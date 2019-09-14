@@ -27,6 +27,8 @@ const (
 	IdLogin               = 0x01
 	IdDisconnect          = 0x02
 	IdChunkData           = 0x03
+	IdChat                = 0x04
+	IdText                = 0x05
 )
 
 type ParseContext struct {
