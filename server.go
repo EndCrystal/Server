@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	defer LogPrefix(LogPrefix("[main] "))
+	LogPrefix("[main] ")
 	var err error
 	flag.Parse()
 	err = loadPluginFromMulti(append(strings.Split(*plugin_home, ":"), filepath.Join(os.Getenv("HOME"), ".local", "share", "EndCrystal", "plugins"))...)
@@ -35,10 +35,19 @@ func main() {
 		log.Fatalf("Failed to create server for this endpoint (%s): %v", *endpoint, err)
 	}
 	defer server.Stop()
+	loop(server.GetFetcher())
 }
 
 var endpoint = flag.String("endpoint", "ws://0.0.0.0:2480", "Server Endpoint")
 var plugin_home = flag.String("plugin-dirs", "plugins", "Plugin directories")
+
+func loop(ch <-chan network.ClientInstance) {
+	for instance := range ch {
+		processClient(instance)
+	}
+}
+
+func processClient(instance network.ClientInstance) {}
 
 func printLoadedPlugins() {
 	for id := range plug.LoadedPlugins {
