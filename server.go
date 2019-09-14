@@ -16,8 +16,14 @@ import (
 	"github.com/EndCrystal/Server/token"
 )
 
+type ChatMessage struct {
+	Sender  string
+	Message string
+}
+
 var global struct {
 	verfier token.TokenVerifier
+	chat    chan<- ChatMessage
 }
 
 var log = logprefix.Get("[main] ")
@@ -35,6 +41,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to load pubkey: %v", err)
 	}
+	// TODO: global.chat
 
 	var server network.Server
 	var endpoint_url *url.URL

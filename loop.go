@@ -19,17 +19,21 @@ type clientState struct {
 }
 
 func processClient(instance network.ClientInstance) {
-	var state clientState
-	var err error
 	defer func() {
-		if err != nil {
-			instance.SendPacket(&packet.DisconnectPacket{err.Error()})
+		if r := recover(); r != nil {
+			if err, ok := r.(error); ok {
+				instance.SendPacket(&packet.DisconnectPacket{err.Error()})
+			} else {
+				instance.SendPacket(&packet.DisconnectPacket{"unknown error"})
+			}
 		}
 		instance.Disconnect()
 	}()
+	var state clientState
+	var err error
 	state, err = processLogin(instance)
 	if err != nil {
-		return
+		panic(err)
 	}
 	fetcher := instance.GetFetcher()
 	for packet := range fetcher {
@@ -74,4 +78,13 @@ func processLogin(instance network.ClientInstance) (state clientState, err error
 }
 
 func processPacket(instance network.ClientInstance, state *clientState, pkt packet.Packet) {
+	switch p := pkt.(type) {
+	case *packet.LoginPacket:
+		panic(fmt.Errorf("State mismatch"))
+	case *packet.ChatPacket:
+		msg := p.Message
+		global.chat <- ChatMessage{state.username, msg}
+	default:
+		panic(fmt.Errorf("Unknown packet"))
+	}
 }
