@@ -4,11 +4,13 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 
 	. "github.com/EndCrystal/Server/logprefix"
+	"github.com/EndCrystal/Server/network"
 	plug "github.com/EndCrystal/Server/plugin"
 )
 
@@ -21,6 +23,18 @@ func main() {
 		log.Fatalf("Failed to load plugins: %v", err)
 	}
 	printLoadedPlugins()
+
+	var server network.Server
+	var endpoint_url *url.URL
+	endpoint_url, err = url.Parse(*endpoint)
+	if err != nil {
+		log.Fatalf("Failed to parse endpoint url: %v", err)
+	}
+	server, err = network.CreateServer(endpoint_url)
+	if err != nil {
+		log.Fatalf("Failed to create server for this endpoint (%s): %v", *endpoint, err)
+	}
+	defer server.Stop()
 }
 
 var endpoint = flag.String("endpoint", "ws://0.0.0.0:2480", "Server Endpoint")
