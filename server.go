@@ -17,6 +17,10 @@ import (
 	"github.com/EndCrystal/Server/token"
 )
 
+var global struct {
+	verfier token.TokenVerifier
+}
+
 func main() {
 	LogPrefix("[main] ")
 	var err error
@@ -27,7 +31,7 @@ func main() {
 	}
 	printLoadedPlugins()
 
-	_, err = loadPubKey()
+	global.verfier, err = loadPubKey()
 	if err != nil {
 		log.Fatalf("Failed to load pubkey: %v", err)
 	}
