@@ -4,13 +4,12 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 
-	. "github.com/EndCrystal/Server/logprefix"
+	"github.com/EndCrystal/Server/logprefix"
 	"github.com/EndCrystal/Server/network"
 	plug "github.com/EndCrystal/Server/plugin"
 	"github.com/EndCrystal/Server/token"
@@ -20,8 +19,9 @@ var global struct {
 	verfier token.TokenVerifier
 }
 
+var log = logprefix.Get("[main] ")
+
 func main() {
-	LogPrefix("[main] ")
 	var err error
 	flag.Parse()
 	err = loadPluginFromMulti(strings.Split(*plugin_home, ":")...)
@@ -54,7 +54,7 @@ var plugin_home = flag.String("plugin-dirs", "plugins:"+filepath.Join(os.Getenv(
 var pubkey_path = flag.String("pubkey", "key.pub", "Path to server pubkey")
 
 func loadPubKey() (verifier token.TokenVerifier, err error) {
-	defer LogPrefix(LogPrefix("[pubkey loader] "))
+	log := logprefix.Get("[pubkey loader] ")
 	log.Printf("Loading from %s", *pubkey_path)
 	stat, err := os.Stat(*pubkey_path)
 	if err != nil {
@@ -91,6 +91,7 @@ func loadPluginFromMulti(roots ...string) (err error) {
 }
 
 func loadPluginFrom(root string) (err error) {
+	log := logprefix.Get("[plugin loader] ")
 	defer func() {
 		if r := recover(); r != nil {
 			if e, ok := r.(error); ok {

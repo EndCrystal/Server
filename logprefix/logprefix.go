@@ -2,8 +2,6 @@ package logprefix
 
 import "log"
 
-func LogPrefix(prefix string) (ret string) {
-	ret = log.Prefix()
-	log.SetPrefix(prefix)
-	return ret
+func Get(prefix string) *log.Logger {
+	return log.New(log.Writer(), prefix, log.Flags())
 }

@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 
 	packed "github.com/EndCrystal/PackedIO"
-	. "github.com/EndCrystal/Server/logprefix"
+	"github.com/EndCrystal/Server/logprefix"
 	"github.com/EndCrystal/Server/network"
 	"github.com/EndCrystal/Server/packet"
 	plug "github.com/EndCrystal/Server/plugin"
@@ -116,7 +116,7 @@ func handler(res http.ResponseWriter, req *http.Request) {
 }
 
 func creator(u *url.URL) (network.Server, error) {
-	defer LogPrefix(LogPrefix("[websocket plugin] "))
+	log := logprefix.Get("[websocket plugin] ")
 	server := new(http.Server)
 	var listener net.Listener
 	var err error
