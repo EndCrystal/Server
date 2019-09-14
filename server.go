@@ -11,6 +11,7 @@ import (
 
 	. "github.com/EndCrystal/Server/logprefix"
 	"github.com/EndCrystal/Server/network"
+	"github.com/EndCrystal/Server/packet"
 	plug "github.com/EndCrystal/Server/plugin"
 )
 
@@ -43,11 +44,18 @@ var plugin_home = flag.String("plugin-dirs", "plugins", "Plugin directories")
 
 func loop(ch <-chan network.ClientInstance) {
 	for instance := range ch {
-		processClient(instance)
+		go processClient(instance)
 	}
 }
 
-func processClient(instance network.ClientInstance) {}
+func processClient(instance network.ClientInstance) {
+	fetcher := instance.GetFetcher()
+	for packet := range fetcher {
+		processPacket(instance, packet)
+	}
+}
+
+func processPacket(instance network.ClientInstance, pkt packet.Packet) {}
 
 func printLoadedPlugins() {
 	for id := range plug.LoadedPlugins {
