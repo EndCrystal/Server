@@ -8,20 +8,29 @@ import (
 	"path/filepath"
 	"strings"
 
+	. "github.com/EndCrystal/Server/logprefix"
 	plug "github.com/EndCrystal/Server/plugin"
 )
 
 func main() {
+	defer LogPrefix(LogPrefix("[main] "))
 	var err error
 	flag.Parse()
 	err = loadPluginFromMulti(append(strings.Split(*plugin_home, ":"), filepath.Join(os.Getenv("HOME"), ".local", "share", "EndCrystal", "plugins"))...)
 	if err != nil {
 		log.Fatalf("Failed to load plugins: %v", err)
 	}
+	printLoadedPlugins()
 }
 
 var endpoint = flag.String("endpoint", "ws://0.0.0.0:2480", "Server Endpoint")
 var plugin_home = flag.String("plugin-dirs", "plugins", "Plugin directories")
+
+func printLoadedPlugins() {
+	for id := range plug.LoadedPlugins {
+		log.Printf("Loaded plugin: %s", id)
+	}
+}
 
 func loadPluginFromMulti(roots ...string) (err error) {
 	for _, root := range roots {
