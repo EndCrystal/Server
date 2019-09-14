@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/url"
 	"os"
@@ -13,6 +14,7 @@ import (
 	"github.com/EndCrystal/Server/network"
 	"github.com/EndCrystal/Server/packet"
 	plug "github.com/EndCrystal/Server/plugin"
+	"github.com/EndCrystal/Server/token"
 )
 
 func main() {
@@ -24,6 +26,11 @@ func main() {
 		log.Fatalf("Failed to load plugins: %v", err)
 	}
 	printLoadedPlugins()
+
+	err = loadPubKey()
+	if err != nil {
+		log.Fatalf("Failed to load pubkey: %v", err)
+	}
 
 	var server network.Server
 	var endpoint_url *url.URL
@@ -41,6 +48,28 @@ func main() {
 
 var endpoint = flag.String("endpoint", "ws://0.0.0.0:2480", "Server Endpoint")
 var plugin_home = flag.String("plugin-dirs", "plugins", "Plugin directories")
+var pubkey_path = flag.String("pubkey", "key.pub", "Path to server pubkey")
+
+var pubkey token.PubKey
+
+func loadPubKey() (err error) {
+	defer LogPrefix(LogPrefix("[pubkey loader] "))
+	log.Printf("Loading from %s", *pubkey_path)
+	stat, err := os.Stat(*pubkey_path)
+	if err != nil {
+		return
+	}
+	if stat.Size() != int64(token.PubKeyLen) {
+		return fmt.Errorf("Failed to load pubkey: size mismatch")
+	}
+	data, err := ioutil.ReadFile(*pubkey_path)
+	if err != nil {
+		return
+	}
+	copy(pubkey[:], data)
+	log.Printf("Loaded")
+	return
+}
 
 func loop(ch <-chan network.ClientInstance) {
 	for instance := range ch {
