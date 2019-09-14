@@ -14,7 +14,7 @@ func main() {
 	var err error
 	err = loadPluginFrom("plugins")
 	if err != nil {
-		log.Panicf("Failed to load plugins: %v", err)
+		log.Fatalf("Failed to load plugins: %v", err)
 	}
 }
 
