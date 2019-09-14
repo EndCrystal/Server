@@ -73,7 +73,7 @@ var opts = &websocket.AcceptOptions{
 	InsecureSkipVerify: true,
 }
 
-type privdata = struct{}
+type privdata struct{}
 
 func handler(res http.ResponseWriter, req *http.Request) {
 	var c *websocket.Conn
