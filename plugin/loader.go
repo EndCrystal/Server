@@ -16,7 +16,7 @@ type EInvalidPlugin struct{ wrapped error }
 func (e EInvalidPlugin) Unwrap() error { return e.wrapped }
 func (e EInvalidPlugin) Error() string { return fmt.Sprintf("Invalid plugin: %v", e.wrapped) }
 
-var LoadedPlugins map[string]*plugin.Plugin
+var LoadedPlugins = make(map[string]*plugin.Plugin)
 
 const PluginSystemVersion = 0
 
@@ -33,10 +33,11 @@ func LoadPlugin(path string, pifce PluginInterface) error {
 	if err != nil {
 		return EInvalidPlugin{err}
 	}
-	name, ok := sname.(string)
+	pname, ok := sname.(*string)
 	if !ok {
 		return EInvalidPlugin{EInvalidPluginId}
 	}
+	name := *pname
 	if _, ok := LoadedPlugins[name]; ok {
 		return EConflictPlugin
 	}

@@ -56,9 +56,9 @@ type Id uint16
 
 var (
 	registry [^Id(0)]Block
-	loaders  map[Id]ExtraLoader
+	loaders     = make(map[Id]ExtraLoader)
 	maxId    Id = 0
-	index    map[string]Id
+	index       = make(map[string]Id)
 )
 
 var EConflict = errors.New("Conflicted block")

@@ -35,7 +35,7 @@ func CreateServer(u *url.URL) (Server, error) {
 	return nil, EInvalidScheme
 }
 
-var registry map[string]ServerCreator
+var registry = make(map[string]ServerCreator)
 
 type ServerCreator func(*url.URL) (Server, error)
 
