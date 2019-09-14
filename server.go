@@ -27,7 +27,7 @@ func main() {
 	}
 	printLoadedPlugins()
 
-	err = loadPubKey()
+	_, err = loadPubKey()
 	if err != nil {
 		log.Fatalf("Failed to load pubkey: %v", err)
 	}
@@ -50,9 +50,7 @@ var endpoint = flag.String("endpoint", "ws://0.0.0.0:2480", "Server Endpoint")
 var plugin_home = flag.String("plugin-dirs", "plugins", "Plugin directories")
 var pubkey_path = flag.String("pubkey", "key.pub", "Path to server pubkey")
 
-var pubkey token.PubKey
-
-func loadPubKey() (err error) {
+func loadPubKey() (verifier token.TokenVerifier, err error) {
 	defer LogPrefix(LogPrefix("[pubkey loader] "))
 	log.Printf("Loading from %s", *pubkey_path)
 	stat, err := os.Stat(*pubkey_path)
@@ -60,13 +58,15 @@ func loadPubKey() (err error) {
 		return
 	}
 	if stat.Size() != int64(token.PubKeyLen) {
-		return fmt.Errorf("Failed to load pubkey: size mismatch")
+		return nil, fmt.Errorf("Failed to load pubkey: size mismatch")
 	}
 	data, err := ioutil.ReadFile(*pubkey_path)
 	if err != nil {
 		return
 	}
+	var pubkey token.PubKey
 	copy(pubkey[:], data)
+	verifier = token.GetTokenVerifier(pubkey)
 	log.Printf("Loaded")
 	return
 }
