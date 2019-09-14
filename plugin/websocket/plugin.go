@@ -8,8 +8,11 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 
 	packed "github.com/EndCrystal/PackedIO"
+	. "github.com/EndCrystal/Server/logprefix"
 	"github.com/EndCrystal/Server/network"
 	"github.com/EndCrystal/Server/packet"
 	plug "github.com/EndCrystal/Server/plugin"
@@ -113,15 +116,20 @@ func handler(res http.ResponseWriter, req *http.Request) {
 }
 
 func creator(u *url.URL) (network.Server, error) {
+	defer LogPrefix(LogPrefix("[websocket plugin] "))
 	server := new(http.Server)
 	var listener net.Listener
 	var err error
 	var usePath bool = false
 	switch u.Scheme {
 	case "ws+unix":
-		listener, err = net.Listen("unix", u.EscapedPath())
+		rpath := filepath.Join(u.Hostname(), u.EscapedPath())
+		os.Remove(rpath)
+		log.Printf("Listen websocket over unix socket: %s", rpath)
+		listener, err = net.Listen("unix", rpath)
 	case "ws":
-		listener, err = net.Listen("tcp", u.Hostname()+":"+u.Port())
+		log.Printf("Listen websocket over tcp: %s", u.Host)
+		listener, err = net.Listen("tcp", u.Host)
 		usePath = true
 	default:
 		return nil, ESchemeError
