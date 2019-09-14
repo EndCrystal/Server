@@ -2,6 +2,12 @@ package token
 
 import "crypto/ed25519"
 
+var (
+	TokenLen   = ed25519.SignatureSize
+	PubKeyLen  = ed25519.PublicKeySize
+	PrivKeyLen = ed25519.PrivateKeySize
+)
+
 type (
 	Token   [ed25519.SignatureSize]byte
 	PubKey  [ed25519.PublicKeySize]byte
