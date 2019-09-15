@@ -31,7 +31,7 @@ func processClient(instance network.ClientInstance) {
 	}()
 	var state clientState
 	var err error
-	state, err = processLogin(instance)
+	state, err = processLoginWithTimeout(instance, 5*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -41,6 +41,30 @@ func processClient(instance network.ClientInstance) {
 	for packet := range fetcher {
 		processPacket(instance, &state, packet)
 	}
+}
+
+func processLoginWithTimeout(instance network.ClientInstance, timeout time.Duration) (state clientState, err error) {
+	statech := make(chan clientState)
+	errch := make(chan error)
+	go func() {
+		var state clientState
+		var err error
+		state, err = processLogin(instance)
+		if err != nil {
+			errch <- err
+		}
+		statech <- state
+	}()
+	timer := time.NewTimer(5 * time.Second)
+	select {
+	case state = <-statech:
+		timer.Stop()
+	case err = <-errch:
+		timer.Stop()
+	case <-timer.C:
+		err = fmt.Errorf("timeout")
+	}
+	return
 }
 
 func processLogin(instance network.ClientInstance) (state clientState, err error) {
