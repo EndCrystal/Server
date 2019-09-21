@@ -22,9 +22,9 @@ func processClient(instance network.ClientInstance) {
 	defer func() {
 		if r := recover(); r != nil {
 			if err, ok := r.(error); ok {
-				instance.SendPacket(&packet.DisconnectPacket{err.Error()})
+				instance.SendPacket(&packet.DisconnectPacket{Message: err.Error()})
 			} else {
-				instance.SendPacket(&packet.DisconnectPacket{"unknown error"})
+				instance.SendPacket(&packet.DisconnectPacket{Message: "unknown error"})
 			}
 		}
 		instance.Disconnect()

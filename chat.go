@@ -10,9 +10,9 @@ func handleChat(broadcaster network.PacketBroadcaster) chan<- ChatMessage {
 	go func() {
 		for msg := range ret {
 			broadcaster.BroadcastPacket(&packet.TextPacket{
-				packet.TextPacketNormal,
-				msg.Sender,
-				&packet.TextPacketPlainTextPayload{msg.Message},
+				Flags:   packet.TextPacketNormal,
+				Sender:  msg.Sender,
+				Payload: &packet.TextPacketPlainTextPayload{Content: msg.Message},
 			})
 		}
 	}()
