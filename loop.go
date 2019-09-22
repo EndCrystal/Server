@@ -105,6 +105,10 @@ func processLogin(instance network.ClientInstance) (state clientState, err error
 		err = fmt.Errorf("Illegal username")
 		return
 	}
+	if _, ok := global.users.Load(payload.Username); ok {
+		err = fmt.Errorf("Forbidden login")
+		return
+	}
 	state.username = payload.Username
 	return
 }
