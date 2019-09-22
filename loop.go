@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/EndCrystal/Server/logprefix"
 	"github.com/EndCrystal/Server/network"
 	"github.com/EndCrystal/Server/packet"
 )
@@ -19,8 +20,12 @@ type clientState struct {
 }
 
 func processClient(instance network.ClientInstance) {
+	log := logprefix.Get("[process client] ")
+	log.Println("New connection")
+	defer log.Println("Client left")
 	defer func() {
 		if r := recover(); r != nil {
+			log.Print(r)
 			if err, ok := r.(error); ok {
 				instance.SendPacket(&packet.DisconnectPacket{Message: err.Error()})
 			} else {
@@ -35,6 +40,7 @@ func processClient(instance network.ClientInstance) {
 	if err != nil {
 		panic(err)
 	}
+	log.Printf("Player %s joined", state.username)
 	global.users.Store(state.username, instance)
 	defer global.users.Delete(state.username)
 	fetcher := instance.GetFetcher()
