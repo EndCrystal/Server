@@ -46,7 +46,7 @@ func main() {
 		log.Fatalf("Failed to load pubkey: %v", err)
 	}
 	global.users = new(sync.Map)
-	handleChat(global)
+	global.chat = handleChat(global)
 
 	var server network.Server
 	var endpoint_url *url.URL
