@@ -1,6 +1,7 @@
 #!/bin/bash
 set -ex
 root="$(realpath .)"
+cd "$root"
 mkdir -p test/plugins
 cd test/plugins
 function do_build() (
