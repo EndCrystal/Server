@@ -12,4 +12,6 @@ function do_build() (
 )
 do_build websocket
 cd ..
+trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
+(go run ../login) &
 go run .. "$@"
