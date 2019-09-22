@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -55,7 +54,7 @@ func (c Client) SendPacket(pkt packet.Packet) (err error) {
 		}
 	}()
 	out := packed.MakeOutput(writter)
-	pkt.Save(out)
+	packet.BuildPacket(pkt, out)
 	return
 }
 func (c Client) GetFetcher() <-chan packet.Packet { return c.fetcher }
@@ -76,6 +75,7 @@ var opts = &websocket.AcceptOptions{
 type privdata struct{}
 
 func handler(res http.ResponseWriter, req *http.Request) {
+	log := logprefix.Get("[websocket plugin] ")
 	var c *websocket.Conn
 	var err error
 	c, err = websocket.Accept(res, req, opts)
@@ -87,15 +87,16 @@ func handler(res http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithCancel(req.Context())
 	ch := ctx.Value(privdata{}).(chan network.ClientInstance)
 	pktch := make(chan packet.Packet)
+	defer close(pktch)
 	ch <- Client{c, pktch, cancel}
 	for {
 		typ, reader, err := c.Reader(ctx)
 		if err != nil {
 			var ce *websocket.CloseError
-			if errors.As(err, ce) {
+			if errors.As(err, &ce) {
 				break
 			}
-			log.Fatalf("Failed to read from ws: %v", err)
+			log.Printf("Failed to read from ws: %v", err)
 			c.Close(websocket.StatusInternalError, "failed to read")
 			return
 		}
@@ -105,8 +106,9 @@ func handler(res http.ResponseWriter, req *http.Request) {
 		}
 		in := packed.MakeInput(reader)
 		var pkt packet.Packet
-		pkt, err = packet.ParsePacket(in, packet.ServerSide, ^uint16(0))
+		pkt, err = packet.ParsePacket(in, packet.ClientSide, ^uint16(0))
 		if err != nil {
+			log.Print(err)
 			c.Close(websocket.StatusProtocolError, "failed to parse")
 			return
 		}
