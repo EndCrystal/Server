@@ -15,12 +15,12 @@ type (
 )
 
 type (
-	TokenGenerator func(data []byte, tok Token)
+	TokenGenerator func(data []byte, tok *Token)
 	TokenVerifier  func(data []byte, tok Token) bool
 )
 
 func GetTokenGenerator(priv PrivKey) TokenGenerator {
-	return func(data []byte, tok Token) {
+	return func(data []byte, tok *Token) {
 		s := ed25519.Sign(priv[:], data)
 		copy(tok[:], s)
 		return

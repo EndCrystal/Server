@@ -42,7 +42,7 @@ func (pkt *LoginPacket) Write(payload LoginPayload, gen token.TokenGenerator) {
 	out.WriteString(payload.Username)
 	out.WriteInt64(payload.Time.Unix())
 	pkt.raw = buf.Bytes()
-	gen(pkt.raw, pkt.token)
+	gen(pkt.raw, &pkt.token)
 }
 
 func (pkt LoginPacket) Verify(verifier token.TokenVerifier) bool {
