@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 
 	packed "github.com/EndCrystal/PackedIO"
 	"github.com/EndCrystal/Server/logprefix"
@@ -40,6 +41,7 @@ type Client struct {
 	identify network.CommonNetworkIdentifier
 	fetcher  chan packet.Packet
 	cancel   func()
+	*sync.Mutex
 }
 
 func (c Client) SendPacket(pkt packet.Packet) (err error) {
@@ -57,7 +59,9 @@ func (c Client) SendPacket(pkt packet.Packet) (err error) {
 		}
 	}()
 	out := packed.MakeOutput(writter)
-	packet.BuildPacket(pkt, out)
+	c.Lock()
+	defer c.Unlock()
+	packet.WritePacket(pkt, out)
 	return
 }
 func (c Client) GetFetcher() <-chan packet.Packet         { return c.fetcher }

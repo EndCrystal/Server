@@ -41,7 +41,7 @@ func auth(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	pkt := genpacket(server, username)
 
 	out := packed.MakeOutput(w)
-	packet.BuildPacket(&pkt, out)
+	packet.WritePacket(&pkt, out)
 }
 
 var keypath = flag.String("key", "key.priv", "Path to server privkey")
