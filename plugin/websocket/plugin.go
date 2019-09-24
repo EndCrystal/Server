@@ -41,7 +41,7 @@ type Client struct {
 	identify network.CommonNetworkIdentifier
 	fetcher  chan packet.Packet
 	cancel   func()
-	*sync.Mutex
+	mtx      *sync.Mutex
 }
 
 func (c Client) SendPacket(pkt packet.Packet) (err error) {
@@ -59,8 +59,8 @@ func (c Client) SendPacket(pkt packet.Packet) (err error) {
 		}
 	}()
 	out := packed.MakeOutput(writter)
-	c.Lock()
-	defer c.Unlock()
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
 	packet.WritePacket(pkt, out)
 	return
 }
@@ -125,6 +125,7 @@ func handler(res http.ResponseWriter, req *http.Request) {
 		identify: getCommonNetworkIdentifier(req),
 		fetcher:  pktch,
 		cancel:   cancel,
+		mtx:      new(sync.Mutex),
 	}
 	for {
 		typ, reader, err := c.Reader(ctx)
