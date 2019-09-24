@@ -1,10 +1,13 @@
 package common
 
-import "github.com/EndCrystal/Server/packet"
+import (
+	"github.com/EndCrystal/Server/network"
+	"github.com/EndCrystal/Server/packet"
+)
 
 type PluginCommonHost struct{}
 
-type GameStartHandler func(username string) packet.GameStartPacket
+type GameStartHandler func(username string, identify network.NetworkIdentifier) packet.GameStartPacket
 
 var Value struct {
 	GameStartHandler GameStartHandler
@@ -15,7 +18,7 @@ func (PluginCommonHost) SetGameStartHandler(handler GameStartHandler) {
 }
 
 func init() {
-	Value.GameStartHandler = func(username string) packet.GameStartPacket {
+	Value.GameStartHandler = func(username string, identify network.NetworkIdentifier) packet.GameStartPacket {
 		return packet.GameStartPacket{
 			Username: username,
 			Label:    username,

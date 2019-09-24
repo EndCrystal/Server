@@ -9,6 +9,8 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 
 	packed "github.com/EndCrystal/PackedIO"
 	"github.com/EndCrystal/Server/logprefix"
@@ -34,9 +36,10 @@ type Server struct {
 }
 
 type Client struct {
-	source  *websocket.Conn
-	fetcher chan packet.Packet
-	cancel  func()
+	source   *websocket.Conn
+	identify network.CommonNetworkIdentifier
+	fetcher  chan packet.Packet
+	cancel   func()
 }
 
 func (c Client) SendPacket(pkt packet.Packet) (err error) {
@@ -57,8 +60,9 @@ func (c Client) SendPacket(pkt packet.Packet) (err error) {
 	packet.BuildPacket(pkt, out)
 	return
 }
-func (c Client) GetFetcher() <-chan packet.Packet { return c.fetcher }
-func (c Client) Disconnect()                      { c.cancel() }
+func (c Client) GetFetcher() <-chan packet.Packet         { return c.fetcher }
+func (c Client) Disconnect()                              { c.cancel() }
+func (c Client) GetIdentifier() network.NetworkIdentifier { return c.identify }
 
 func (s Server) Stop() {
 	close(s.fetcher)
@@ -74,6 +78,30 @@ var opts = &websocket.AcceptOptions{
 
 type privdata struct{}
 
+func getCommonNetworkIdentifier(req *http.Request) (id network.CommonNetworkIdentifier) {
+	xForwardedFor := req.Header.Get("X-Forwarded-For")
+	ip := strings.TrimSpace(strings.Split(xForwardedFor, ",")[0])
+	if len(ip) != 0 {
+		id.IP = net.ParseIP(ip)
+		return
+	}
+	ip = strings.TrimSpace(req.Header.Get("X-Real-Ip"))
+	if len(ip) != 0 {
+		id.IP = net.ParseIP(ip)
+		return
+	}
+	if ip, port, err := net.SplitHostPort(strings.TrimSpace(req.RemoteAddr)); err == nil {
+		id.IP = net.ParseIP(ip)
+		xport, err := strconv.Atoi(port)
+		if err != nil {
+			return
+		}
+		id.Port = uint16(xport)
+		return
+	}
+	return
+}
+
 func handler(res http.ResponseWriter, req *http.Request) {
 	log := logprefix.Get("[websocket plugin] ")
 	var c *websocket.Conn
@@ -88,7 +116,12 @@ func handler(res http.ResponseWriter, req *http.Request) {
 	ch := ctx.Value(privdata{}).(chan network.ClientInstance)
 	pktch := make(chan packet.Packet)
 	defer close(pktch)
-	ch <- Client{c, pktch, cancel}
+	ch <- Client{
+		source:   c,
+		identify: network.CommonNetworkIdentifier{},
+		fetcher:  pktch,
+		cancel:   cancel,
+	}
 	for {
 		typ, reader, err := c.Reader(ctx)
 		if err != nil {

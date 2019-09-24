@@ -44,7 +44,7 @@ func processClient(instance network.ClientInstance) {
 	log.Printf("Player %s joined", state.username)
 	global.users.Store(state.username, instance)
 	defer global.users.Delete(state.username)
-	startpacket := common.Value.GameStartHandler(state.username)
+	startpacket := common.Value.GameStartHandler(state.username, instance.GetIdentifier())
 	instance.SendPacket(&startpacket)
 	fetcher := instance.GetFetcher()
 	for packet := range fetcher {
