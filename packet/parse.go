@@ -25,6 +25,8 @@ func Parse(in packed.Input, ctx *ParseContext) (pkt Packet) {
 		pkt = new(ChatPacket)
 	case IdText:
 		pkt = new(TextPacket)
+	case IdGameStart:
+		pkt = new(GameStartPacket)
 	default:
 		panic(EUnknownPacket)
 	}

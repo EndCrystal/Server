@@ -29,6 +29,7 @@ const (
 	IdChunkData           = 0x03
 	IdChat                = 0x04
 	IdText                = 0x05
+	IdGameStart           = 0x06
 )
 
 type ParseContext struct {
