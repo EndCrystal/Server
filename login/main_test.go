@@ -21,7 +21,7 @@ func TestVerify(t *testing.T) {
 	}
 
 	out, buf := packed.NewOutput()
-	packet.BuildPacket(&pkt, out)
+	packet.WritePacket(&pkt, out)
 
 	in := packed.InputFromBuffer(buf.Bytes())
 	parsed, err := packet.ParsePacket(in, packet.ClientSide, ^uint16(0))
