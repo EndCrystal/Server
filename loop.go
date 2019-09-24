@@ -41,7 +41,7 @@ func processClient(instance network.ClientInstance) {
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("Player %s joined", state.username)
+	log.Printf("Player %s joined: %v", state.username, instance.GetIdentifier())
 	global.users.Store(state.username, instance)
 	defer global.users.Delete(state.username)
 	startpacket := common.Value.GameStartHandler(state.username, instance.GetIdentifier())

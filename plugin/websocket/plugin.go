@@ -118,7 +118,7 @@ func handler(res http.ResponseWriter, req *http.Request) {
 	defer close(pktch)
 	ch <- Client{
 		source:   c,
-		identify: network.CommonNetworkIdentifier{},
+		identify: getCommonNetworkIdentifier(req),
 		fetcher:  pktch,
 		cancel:   cancel,
 	}
