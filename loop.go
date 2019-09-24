@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/EndCrystal/Server/common"
 	"github.com/EndCrystal/Server/logprefix"
 	"github.com/EndCrystal/Server/network"
 	"github.com/EndCrystal/Server/packet"
@@ -43,6 +44,8 @@ func processClient(instance network.ClientInstance) {
 	log.Printf("Player %s joined", state.username)
 	global.users.Store(state.username, instance)
 	defer global.users.Delete(state.username)
+	startpacket := common.Value.GameStartHandler(state.username)
+	instance.SendPacket(&startpacket)
 	fetcher := instance.GetFetcher()
 	for packet := range fetcher {
 		processPacket(instance, &state, packet)
