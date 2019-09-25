@@ -1,20 +1,20 @@
 package actor
 
-var systems []System
+type Systems []System
 
-func AddSystem(sys System) {
-	systems = append(systems, sys)
-	systems[len(systems)-1].Update()
+func (s *Systems) AddActorSystem(sys System) {
+	*s = append(*s, sys)
+	(*s)[len(*s)-1].Update()
 }
 
-func AddActor(actor Actor) {
-	for _, sys := range systems {
+func (s Systems) AddActor(actor Actor) {
+	for _, sys := range s {
 		sys.Add(actor)
 	}
 }
 
-func RemoveAcctor(id Id) {
-	for _, sys := range systems {
+func (s Systems) RemoveActor(id Id) {
+	for _, sys := range s {
 		sys.Remove(id)
 	}
 }
