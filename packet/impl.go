@@ -23,13 +23,13 @@ const NetworkVersion uint32 = 0x01
 type PacketId uint8
 
 const (
-	IdBatch      PacketId = 0xFF
-	IdLogin               = 0x01
-	IdDisconnect          = 0x02
-	IdChunkData           = 0x03
-	IdChat                = 0x04
-	IdText                = 0x05
-	IdGameStart           = 0x06
+	IdBatch PacketId = iota
+	IdLogin
+	IdDisconnect
+	IdGameStart
+	IdChat
+	IdText
+	IdChunkData
 )
 
 type ParseContext struct {
