@@ -37,9 +37,16 @@ func main() {
 	flag.Parse()
 	err = loadPluginFromMulti(strings.Split(*plugin_home, ":")...)
 	if err != nil {
+		pluginStats()
 		log.Fatalf("Failed to load plugins: %v", err)
 	}
-	printLoadedPlugins()
+	log.Print("Applying plugin...")
+	err = plug.ApplyPlugin(plug.PluginInterface{})
+	if err != nil {
+		pluginStats()
+		log.Fatalf("Failed to apply plugin: %v", err)
+	}
+	pluginStats()
 
 	global.verfier, err = loadPubKey()
 	if err != nil {
@@ -89,9 +96,13 @@ func loadPubKey() (verifier token.TokenVerifier, err error) {
 	return
 }
 
-func printLoadedPlugins() {
+func pluginStats() {
+	log := logprefix.Get("[plugin stats] ")
+	for id := range plug.PendingPlugins {
+		log.Printf("Queued %s", id)
+	}
 	for id := range plug.LoadedPlugins {
-		log.Printf("Loaded plugin: %s", id)
+		log.Printf("Loaded %s", id)
 	}
 }
 
@@ -129,7 +140,7 @@ func loadPluginFrom(root string) (err error) {
 			return nil
 		}
 		log.Printf("Loading plugin: %s", path)
-		err = plug.LoadPlugin(path, plug.PluginInterface{})
+		err = plug.LoadPlugin(path)
 		if err != nil {
 			return err
 		}

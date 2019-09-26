@@ -22,6 +22,7 @@ import (
 )
 
 var PluginId string = "core:network:websocket"
+var Dependencies = []string{}
 
 func PluginMain(i plug.PluginInterface) error {
 	i.RegisterNetworkProtocol("ws", creator)
