@@ -10,23 +10,15 @@ import (
 var EUnknownPacket = errors.New("Unknown Packet ID")
 var EDisallowedPacket = errors.New("Disallowed Packet")
 
-func Parse(in packed.Input, ctx *ParseContext) (pkt Packet) {
+func Parse(in packed.Input, ctx *ParseContext) (pkt ReceiveOnlyPacket) {
 	id := PacketId(in.ReadUint8())
 	switch id {
 	case IdBatch:
-		pkt = &BatchPacket{ctx, nil}
+		pkt = &BatchPacket{ctx, nil, nil}
 	case IdLogin:
 		pkt = new(LoginPacket)
-	case IdDisconnect:
-		pkt = new(DisconnectPacket)
-	case IdChunkData:
-		pkt = new(ChunkDataPacket)
 	case IdChat:
 		pkt = new(ChatPacket)
-	case IdText:
-		pkt = new(TextPacket)
-	case IdGameStart:
-		pkt = new(GameStartPacket)
 	default:
 		panic(EUnknownPacket)
 	}
@@ -37,7 +29,7 @@ func Parse(in packed.Input, ctx *ParseContext) (pkt Packet) {
 	return
 }
 
-func ParsePacket(in packed.Input, side Side, quota uint16) (pkt Packet, err error) {
+func ParsePacket(in packed.Input, quota uint16) (pkt ReceiveOnlyPacket, err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			var ok bool
@@ -48,6 +40,6 @@ func ParsePacket(in packed.Input, side Side, quota uint16) (pkt Packet, err erro
 			return
 		}
 	}()
-	pkt = Parse(in, &ParseContext{side, quota})
+	pkt = Parse(in, &ParseContext{quota})
 	return
 }

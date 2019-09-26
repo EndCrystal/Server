@@ -70,5 +70,3 @@ func (pkt TextPacket) Save(out packed.Output) {
 }
 
 func (pkt TextPacket) PacketId() PacketId { return IdText }
-
-func (pkt TextPacket) Check(pctx *ParseContext) bool { return pctx.Check(ServerSide, 0) }

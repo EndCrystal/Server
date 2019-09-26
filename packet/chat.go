@@ -20,5 +20,5 @@ func (pkt ChatPacket) Check(pctx *ParseContext) bool {
 	if l > 1024 {
 		return false
 	}
-	return pctx.Check(ClientSide, uint16(l*2))
+	return pctx.Check(uint16(l * 2))
 }

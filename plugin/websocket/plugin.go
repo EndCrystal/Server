@@ -40,12 +40,12 @@ type Server struct {
 type Client struct {
 	source   *websocket.Conn
 	identify network.CommonNetworkIdentifier
-	fetcher  chan packet.Packet
+	fetcher  chan packet.ReceiveOnlyPacket
 	cancel   func()
 	mtx      *sync.Mutex
 }
 
-func (c Client) SendPacket(pkt packet.Packet) (err error) {
+func (c Client) SendPacket(pkt packet.SendOnlyPacket) (err error) {
 	writter, err := c.source.Writer(context.TODO(), websocket.MessageBinary)
 	if err != nil {
 		return err
@@ -65,9 +65,9 @@ func (c Client) SendPacket(pkt packet.Packet) (err error) {
 	packet.WritePacket(pkt, out)
 	return
 }
-func (c Client) GetFetcher() <-chan packet.Packet         { return c.fetcher }
-func (c Client) Disconnect()                              { c.cancel() }
-func (c Client) GetIdentifier() network.NetworkIdentifier { return c.identify }
+func (c Client) GetFetcher() <-chan packet.ReceiveOnlyPacket { return c.fetcher }
+func (c Client) Disconnect()                                 { c.cancel() }
+func (c Client) GetIdentifier() network.NetworkIdentifier    { return c.identify }
 
 func (s Server) Stop() {
 	close(s.fetcher)
@@ -119,7 +119,7 @@ func handler(res http.ResponseWriter, req *http.Request) {
 	defer c.Close(websocket.StatusInternalError, "fallthrough")
 	ctx, cancel := context.WithCancel(req.Context())
 	ch := ctx.Value(privdata{}).(chan network.ClientInstance)
-	pktch := make(chan packet.Packet)
+	pktch := make(chan packet.ReceiveOnlyPacket)
 	defer close(pktch)
 	ch <- Client{
 		source:   c,
@@ -144,8 +144,8 @@ func handler(res http.ResponseWriter, req *http.Request) {
 			return
 		}
 		in := packed.MakeInput(reader)
-		var pkt packet.Packet
-		pkt, err = packet.ParsePacket(in, packet.ClientSide, ^uint16(0))
+		var pkt packet.ReceiveOnlyPacket
+		pkt, err = packet.ParsePacket(in, ^uint16(0))
 		if err != nil {
 			log.Print(err)
 			c.Close(websocket.StatusProtocolError, "failed to parse")

@@ -4,13 +4,16 @@ import (
 	packed "github.com/EndCrystal/PackedIO"
 )
 
-type Side uint8
+type SendOnlyPacket interface {
+	PacketId() PacketId
+	Save(packed.Output)
+}
 
-const (
-	InternalSide = 0
-	ServerSide   = 1
-	ClientSide   = 2
-)
+type ReceiveOnlyPacket interface {
+	PacketId() PacketId
+	Load(packed.Input)
+	Check(ctx *ParseContext) bool
+}
 
 type Packet interface {
 	packed.Serializable
@@ -33,16 +36,10 @@ const (
 )
 
 type ParseContext struct {
-	Side  Side
 	Quota uint16
 }
 
-func (ctx *ParseContext) Check(side Side, eat uint16) bool {
-	if side != 0 && ctx.Side != 0 {
-		if side != ctx.Side {
-			return false
-		}
-	}
+func (ctx *ParseContext) Check(eat uint16) bool {
 	if eat > ctx.Quota {
 		return false
 	}

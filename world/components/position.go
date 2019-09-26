@@ -1,4 +1,4 @@
-package builtin
+package components
 
 import packed "github.com/EndCrystal/PackedIO"
 
@@ -23,4 +23,18 @@ type PositionComponent interface {
 	GetPosition() *Position
 	LoadPosition(packed.Input)
 	SavePosition(packed.Output)
+}
+
+type positionInfo struct{}
+
+func (positionInfo) Secure() bool { return false }
+func (positionInfo) LoadComponent(i packed.Input, obj interface{}) {
+	obj.(PositionComponent).LoadPosition(i)
+}
+func (positionInfo) SaveComponent(o packed.Output, obj interface{}) {
+	obj.(PositionComponent).SavePosition(o)
+}
+
+func init() {
+	Register("core:position", (*PositionComponent)(nil), positionInfo{})
 }

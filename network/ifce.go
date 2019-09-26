@@ -10,11 +10,11 @@ import (
 )
 
 type PacketSender interface {
-	SendPacket(pkt packet.Packet) error
+	SendPacket(pkt packet.SendOnlyPacket) error
 }
 
 type PacketBroadcaster interface {
-	BroadcastPacket(pkt packet.Packet)
+	BroadcastPacket(pkt packet.SendOnlyPacket)
 }
 
 type NetworkIdentifier interface {
@@ -38,7 +38,7 @@ func (id CommonNetworkIdentifier) GetPort() (uint16, bool) { return id.Port, tru
 type ClientInstance interface {
 	PacketSender
 	GetIdentifier() NetworkIdentifier
-	GetFetcher() <-chan packet.Packet
+	GetFetcher() <-chan packet.ReceiveOnlyPacket
 	Disconnect()
 }
 

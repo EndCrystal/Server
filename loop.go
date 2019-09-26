@@ -119,7 +119,7 @@ func processLogin(instance network.ClientInstance) (state clientState, err error
 	return
 }
 
-func processPacket(instance network.ClientInstance, state *clientState, pkt packet.Packet) {
+func processPacket(instance network.ClientInstance, state *clientState, pkt packet.ReceiveOnlyPacket) {
 	switch p := pkt.(type) {
 	case *packet.LoginPacket:
 		panic(fmt.Errorf("State mismatch"))
