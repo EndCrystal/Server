@@ -33,7 +33,7 @@ func (m *Map) GetChunk(pos ChunkPos) (ret *ChunkRef, err error) {
 	defer func() {
 		if err == nil {
 			ret = &ChunkRef{
-				Mutex:      new(sync.Mutex),
+				mtx:        new(sync.Mutex),
 				Chunk:      chk,
 				lastAccess: time.Now(),
 			}

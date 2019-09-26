@@ -6,10 +6,14 @@ import (
 )
 
 type ChunkRef struct {
-	*sync.Mutex
+	mtx *sync.Mutex
 	*Chunk
 	lastAccess time.Time
 }
 
-func (ref *ChunkRef) Access()             { ref.lastAccess = time.Now() }
+func (ref *ChunkRef) Access() func() {
+	ref.mtx.Lock()
+	ref.lastAccess = time.Now()
+	return ref.mtx.Unlock
+}
 func (ref ChunkRef) Since() time.Duration { return time.Since(ref.lastAccess) }
