@@ -13,9 +13,10 @@ type (
 )
 
 var (
-	maxId    Id
-	freelist map[Id]struct{}
-	mtx      sync.Mutex
+	Invalid  = Id(0)
+	maxId    = Id(1)
+	freelist = make(map[Id]struct{})
+	mtx      = new(sync.Mutex)
 )
 
 func (id Identifier) ID() Id { return id.Id }

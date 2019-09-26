@@ -14,6 +14,9 @@ func (s Systems) AddActor(actor Actor) {
 }
 
 func (s Systems) RemoveActor(id Id) {
+	if id == Invalid {
+		return
+	}
 	for _, sys := range s {
 		sys.Remove(id)
 	}
