@@ -1,9 +1,16 @@
 package dim
 
-import "github.com/EndCrystal/Server/world/actor"
+import (
+	"sync"
+
+	"github.com/EndCrystal/Server/world/actor"
+	"github.com/EndCrystal/Server/world/chunk"
+)
 
 type Dimension struct {
+	*sync.Mutex
 	actor.Systems
+	chunk.Map
 	tags []string
 }
 
