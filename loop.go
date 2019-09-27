@@ -10,10 +10,11 @@ import (
 	"github.com/EndCrystal/Server/packet"
 )
 
-func loop(ch <-chan network.ClientInstance) {
+func loop(ch <-chan network.ClientInstance, done chan<- struct{}) {
 	for instance := range ch {
 		go processClient(instance)
 	}
+	done <- struct{}{}
 }
 
 type clientState struct {

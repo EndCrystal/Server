@@ -6,15 +6,18 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/EndCrystal/Server/logprefix"
 	"github.com/EndCrystal/Server/network"
 	plug "github.com/EndCrystal/Server/plugin"
 	"github.com/EndCrystal/Server/token"
+	"github.com/EndCrystal/Server/world/storage"
 )
 
 type ChatMessage struct {
@@ -35,6 +38,11 @@ var log = logprefix.Get("[main] ")
 func main() {
 	var err error
 	flag.Parse()
+	err = loadMainStorage()
+	if err != nil {
+		log.Fatalf("Failed to load main storage: %s", *storage_path)
+	}
+	defer storage.MainStorage.Close()
 	err = loadPluginFromMulti(strings.Split(*plugin_home, ":")...)
 	if err != nil {
 		pluginStats()
@@ -66,7 +74,15 @@ func main() {
 		log.Fatalf("Failed to create server for this endpoint (%s): %v", *endpoint, err)
 	}
 	defer server.Stop()
-	loop(server.GetFetcher())
+	done := make(chan struct{})
+	go loop(server.GetFetcher(), done)
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	select {
+	case <-done:
+	case sig := <-sigs:
+		log.Printf("Received signal %v: exiting...", sig)
+	}
 }
 
 var endpoint = flag.String("endpoint", "ws://0.0.0.0:2480", "Server Endpoint")
@@ -74,6 +90,12 @@ var plugin_home = flag.String("plugin-dirs", "plugins:"+filepath.Join(os.Getenv(
 var pubkey_path = flag.String("pubkey", "key.pub", "Path to server pubkey")
 var server_id = flag.String("server-id", "default", "Server Id")
 var connection_timeout = flag.Duration("verify-timeout", time.Second*10, "Timeout for verify login packet")
+var storage_path = flag.String("storage", "endcrystal.db", "Path to EndCrystal Main Storage")
+
+func loadMainStorage() (err error) {
+	storage.MainStorage, err = storage.Open(*storage_path)
+	return
+}
 
 func loadPubKey() (verifier token.TokenVerifier, err error) {
 	log := logprefix.Get("[pubkey loader] ")

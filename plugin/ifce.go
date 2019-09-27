@@ -6,6 +6,7 @@ import (
 	"github.com/EndCrystal/Server/world/block"
 	"github.com/EndCrystal/Server/world/components"
 	"github.com/EndCrystal/Server/world/dim"
+	"github.com/EndCrystal/Server/world/storage"
 )
 
 type PluginInterface struct {
@@ -14,4 +15,5 @@ type PluginInterface struct {
 	dim.PluginDimensionHost
 	block.PluginBlockHost
 	components.PluginComponentsHost
+	storage.PluginStorageHost
 }

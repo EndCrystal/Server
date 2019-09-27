@@ -7,21 +7,23 @@ import (
 	"github.com/EndCrystal/Server/world/chunk"
 )
 
-type PluginDimensionHost struct {
-	mtx                     *sync.Mutex
+var (
+	mtx                     = new(sync.Mutex)
 	pendingActorSystemAdder []func(tags []string) actor.System
-}
+)
 
-func (host PluginDimensionHost) AddDimension(name string, tags []string, storage chunk.Storage, generator chunk.Generator) {
-	host.mtx.Lock()
-	defer host.mtx.Unlock()
+type PluginDimensionHost struct{}
+
+func (PluginDimensionHost) AddDimension(name string, tags []string, storage chunk.Storage, generator chunk.Generator) {
+	mtx.Lock()
+	defer mtx.Unlock()
 	d := Dimension{
 		Mutex:   new(sync.Mutex),
 		Systems: make(actor.Systems, 0),
 		tags:    tags,
 	}
 	d.Map.Init(storage, generator)
-	for _, adder := range host.pendingActorSystemAdder {
+	for _, adder := range pendingActorSystemAdder {
 		sys := adder(tags)
 		if sys != nil {
 			d.AddActorSystem(sys)
@@ -31,14 +33,14 @@ func (host PluginDimensionHost) AddDimension(name string, tags []string, storage
 	return
 }
 
-func (host PluginDimensionHost) AddActorSystem(adder func(tags []string) actor.System) {
-	host.mtx.Lock()
-	defer host.mtx.Unlock()
+func (PluginDimensionHost) AddActorSystem(adder func(tags []string) actor.System) {
+	mtx.Lock()
+	defer mtx.Unlock()
 	for _, d := range dims {
 		sys := adder(d.tags)
 		if sys != nil {
 			d.AddActorSystem(sys)
 		}
 	}
-	host.pendingActorSystemAdder = append(host.pendingActorSystemAdder, adder)
+	pendingActorSystemAdder = append(pendingActorSystemAdder, adder)
 }

@@ -14,7 +14,7 @@ type Dimension struct {
 	tags []string
 }
 
-var dims map[string]*Dimension
+var dims = make(map[string]*Dimension)
 
 func (d Dimension) Tags() []string {
 	return d.tags

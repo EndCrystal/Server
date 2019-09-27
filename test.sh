@@ -11,6 +11,7 @@ function do_build() (
   chmod a+x "$target"
 )
 do_build websocket
+do_build flatdim
 cd ..
 trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
 (go run ../login) &

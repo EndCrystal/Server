@@ -103,25 +103,23 @@ func ApplyPlugin(pifce PluginInterface) error {
 	ch := make(chan *PluginInfo)
 	errch := make(chan error)
 	go func() {
-		for item := range ch {
-			if err := item.fn(pifce); err != nil {
-				errch <- err
-				return
-			}
-		}
-	}()
-	done := make(chan struct{})
-	go func() {
 		if err := sortPlugins(ch); err != nil {
 			errch <- err
 		}
-		done <- struct{}{}
+		close(errch)
 	}()
-	select {
-	case <-done:
-		return nil
-	case err := <-errch:
-		return err
+	for {
+		select {
+		case err := <-errch:
+			return err
+		case item, ok := <-ch:
+			if !ok {
+				return nil
+			}
+			if err := item.fn(pifce); err != nil {
+				return err
+			}
+		}
 	}
 }
 
