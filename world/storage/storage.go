@@ -20,7 +20,7 @@ func Open(path string) (ret *Storage, err error) {
 	return
 }
 
-func (s *Storage) Close() {
+func (s Storage) Close() {
 	s.db.Close()
 }
 
