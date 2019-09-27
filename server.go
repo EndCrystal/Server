@@ -114,7 +114,6 @@ func loadPubKey() (verifier token.TokenVerifier, err error) {
 	var pubkey token.PubKey
 	copy(pubkey[:], data)
 	verifier = token.GetTokenVerifier(pubkey)
-	log.Printf("Loaded")
 	return
 }
 
@@ -161,7 +160,7 @@ func loadPluginFrom(root string) (err error) {
 			log.Printf("Skiped plugin: %s", path)
 			return nil
 		}
-		log.Printf("Loading plugin: %s", path)
+		log.Printf("Found plugin: %s", path)
 		err = plug.LoadPlugin(path)
 		if err != nil {
 			return err
@@ -177,6 +176,6 @@ func loadPluginFrom(root string) (err error) {
 		}
 		return
 	}
-	log.Printf("Loaded %d plugins from %s", plugin_count, root)
+	log.Printf("Queued %d plugins from %s", plugin_count, root)
 	return
 }
