@@ -5,6 +5,7 @@ import (
 
 	"github.com/EndCrystal/Server/world/actor"
 	"github.com/EndCrystal/Server/world/chunk"
+	"github.com/EndCrystal/Server/world/system"
 )
 
 var (
@@ -23,6 +24,9 @@ func (PluginDimensionHost) AddDimension(name string, tags []string, storage chun
 		tags:    tags,
 	}
 	d.Map.Init(storage, generator)
+	for _, sysfn := range system.PreloadedSystems {
+		d.AddActorSystem(sysfn())
+	}
 	for _, adder := range pendingActorSystemAdder {
 		sys := adder(tags)
 		if sys != nil {

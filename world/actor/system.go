@@ -1,9 +1,15 @@
 package actor
 
 type System interface {
-	Update()
+	Name() string
 	Remove(Id)
 	Add(Actor)
 }
 
-type SystemInitializer interface{ Init() }
+type SystemUpdatable interface {
+	System
+	Update()
+}
+
+type BaseSystem map[Id]Actor
+
