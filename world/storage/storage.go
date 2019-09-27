@@ -24,6 +24,51 @@ func (s Storage) Close() {
 	s.db.Close()
 }
 
+func (s *Storage) ForConfig(path ...string) StorageForConfig {
+	if len(path) == 0 {
+		panic("path is required")
+	}
+	return StorageForConfig{s, path}
+}
+
+type StorageForConfig struct {
+	*Storage
+	path []string
+}
+
+func (s StorageForConfig) Get(key string) (ret []byte) {
+	s.db.View(func(tx *bbolt.Tx) error {
+		var ifc interface{ Bucket([]byte) *bbolt.Bucket } = tx
+		for _, item := range s.path {
+			ifc = ifc.Bucket([]byte(item))
+			if ifc == nil {
+				return nil
+			}
+		}
+		bkt := ifc.(*bbolt.Bucket)
+		ret = bkt.Get([]byte(key))
+		return nil
+	})
+	return
+}
+
+func (s StorageForConfig) Set(key string, value []byte) error {
+	return s.db.Batch(func(tx *bbolt.Tx) error {
+		var ifc interface {
+			CreateBucketIfNotExists([]byte) (*bbolt.Bucket, error)
+		} = tx
+		for _, item := range s.path {
+			var err error
+			ifc, err = ifc.CreateBucketIfNotExists([]byte(item))
+			if err != nil {
+				return err
+			}
+		}
+		bkt := ifc.(*bbolt.Bucket)
+		return bkt.Put([]byte(key), value)
+	})
+}
+
 func (s *Storage) ForDim(name string) StorageForDim {
 	return StorageForDim{s, name}
 }
