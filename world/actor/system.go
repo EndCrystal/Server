@@ -11,5 +11,3 @@ type SystemUpdatable interface {
 	Update()
 }
 
-type BaseSystem map[Id]Actor
-
