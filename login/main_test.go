@@ -24,7 +24,7 @@ func TestVerify(t *testing.T) {
 	packet.WritePacket(&pkt, out)
 
 	in := packed.InputFromBuffer(buf.Bytes())
-	parsed, err := packet.ParsePacket(in, packet.ClientSide, ^uint16(0))
+	parsed, err := packet.ParsePacket(in, ^uint16(0))
 	if err != nil {
 		t.Fatalf("Failed to parse: %v", err)
 	}
