@@ -2,13 +2,20 @@ package actor
 
 import (
 	"sync"
+
+	. "github.com/EndCrystal/Server/types"
 )
 
 type (
-	Id         uint32
-	Identifier struct{ Id }
-	Actor      interface {
+	Identifier          struct{ Id }
+	RuntimeComponentMap map[Id]interface{}
+	Basic               struct {
+		Identifier
+		runtime RuntimeComponentMap
+	}
+	Actor interface {
 		ID() Id
+		RuntimeComponentMap() RuntimeComponentMap
 	}
 )
 
@@ -19,7 +26,8 @@ var (
 	mtx      = new(sync.Mutex)
 )
 
-func (id Identifier) ID() Id { return id.Id }
+func (id Identifier) ID() Id                             { return id.Id }
+func (b Basic) RuntimeComponentMap() RuntimeComponentMap { return b.runtime }
 
 func AllocIdentifier() Id {
 	mtx.Lock()

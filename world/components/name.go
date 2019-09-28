@@ -24,6 +24,4 @@ func (nameInfo) SaveComponent(o packed.Output, obj interface{}) {
 	o.WriteString(obj.(NameComponent).GetName())
 }
 
-func init() {
-	Register("core:name", (*NameComponent)(nil), nameInfo{})
-}
+var NameId = Register("core:name", (*NameComponent)(nil), nameInfo{})

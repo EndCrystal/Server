@@ -1,27 +1,73 @@
 package user
 
 import (
-	"github.com/EndCrystal/Server/world/actor"
+	"container/list"
+	"sync"
+
 	"github.com/EndCrystal/Server/world/chunk"
 	"github.com/EndCrystal/Server/world/dim"
-	"github.com/EndCrystal/Server/world/system"
+
+	. "github.com/EndCrystal/Server/types"
 )
+
+type Event interface {
+	EventName() string
+}
 
 type UserInfo struct {
 	Username         string
 	UserLabel        string
-	Dimension        dim.Dimension
-	ControllingActor actor.Id
+	Dimension        *dim.Dimension
+	ControllingActor Id
 	Pos              chunk.ChunkPos
+	events           list.List
 }
 
 func (info UserInfo) GetChunkPosition() chunk.ChunkPos {
-	if info.ControllingActor == actor.Invalid {
-		return info.Pos
+	return info.Pos
+}
+
+func (info UserInfo) AddEvent(event Event) {
+	info.events.PushBack(event)
+}
+
+func (info UserInfo) HandleEvent(fn func(Event) bool) {
+	e := info.events.Front()
+	for e != nil {
+		if fn(e.Value.(Event)) {
+			next := e.Next()
+			info.events.Remove(e)
+			e = next
+		} else {
+			e = e.Next()
+		}
 	}
-	pos := info.Dimension.Systems["core:position"].(system.PositionSystem)[info.ControllingActor].GetPosition()
-	return chunk.ChunkPos{
-		X: int32(pos.X / 16.),
-		Z: int32(pos.Z / 16.),
+}
+
+func (info UserInfo) ClearEvents() {
+	info.events.Init()
+}
+
+var users = make(map[string]*UserInfo)
+var mtx sync.RWMutex
+
+func FindUser(name string) *UserInfo {
+	mtx.RLock()
+	defer mtx.RUnlock()
+	if found, ok := users[name]; ok {
+		return found
 	}
+	return nil
+}
+
+func AddUser(info *UserInfo) {
+	mtx.Lock()
+	defer mtx.Unlock()
+	users[info.Username] = info
+}
+
+func RemoveUser(name string) {
+	mtx.Lock()
+	defer mtx.Unlock()
+	delete(users, name)
 }

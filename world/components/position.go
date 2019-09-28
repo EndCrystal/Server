@@ -35,6 +35,4 @@ func (positionInfo) SaveComponent(o packed.Output, obj interface{}) {
 	obj.(PositionComponent).SavePosition(o)
 }
 
-func init() {
-	Register("core:position", (*PositionComponent)(nil), positionInfo{})
-}
+var PositionId = Register("core:position", (*PositionComponent)(nil), positionInfo{})

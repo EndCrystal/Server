@@ -5,7 +5,6 @@ import (
 
 	"github.com/EndCrystal/Server/world/actor"
 	"github.com/EndCrystal/Server/world/chunk"
-	"github.com/EndCrystal/Server/world/system"
 )
 
 var (
@@ -20,13 +19,10 @@ func (PluginDimensionHost) AddDimension(name string, tags []string, storage chun
 	defer mtx.Unlock()
 	d := Dimension{
 		Mutex:   new(sync.Mutex),
-		Systems: make(actor.Systems, 0),
+		Systems: actor.MakeSystems(),
 		tags:    tags,
 	}
 	d.Map.Init(storage, generator)
-	for _, sysfn := range system.PreloadedSystems {
-		d.AddActorSystem(sysfn())
-	}
 	for _, adder := range pendingActorSystemAdder {
 		sys := adder(tags)
 		if sys != nil {
@@ -47,4 +43,8 @@ func (PluginDimensionHost) AddActorSystem(adder func(tags []string) actor.System
 		}
 	}
 	pendingActorSystemAdder = append(pendingActorSystemAdder, adder)
+}
+
+func AddPreloadActorSystem(adder func() actor.System) {
+	pendingActorSystemAdder = append(pendingActorSystemAdder, func([]string) actor.System { return adder() })
 }

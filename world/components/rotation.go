@@ -25,6 +25,4 @@ func (rotationInfo) SaveComponent(o packed.Output, obj interface{}) {
 	obj.(RotationComponent).SaveRotation(o)
 }
 
-func init() {
-	Register("core:rotation", (*RotationComponent)(nil), rotationInfo{})
-}
+var RotationId = Register("core:rotation", (*RotationComponent)(nil), rotationInfo{})
