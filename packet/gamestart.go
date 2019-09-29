@@ -2,6 +2,7 @@ package packet
 
 import (
 	packed "github.com/EndCrystal/PackedIO"
+	"github.com/EndCrystal/Server/world/block"
 	"github.com/EndCrystal/Server/world/chunk"
 	"github.com/EndCrystal/Server/world/components"
 )
@@ -18,6 +19,7 @@ func (pkt GameStartPacket) Save(out packed.Output) {
 	out.WriteString(pkt.Label)
 	out.WriteString(pkt.Motd)
 	pkt.InitialPosition.Save(out)
+	block.DescribeBlocks(out)
 	components.DescribeComponents(out)
 }
 

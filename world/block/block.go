@@ -103,3 +103,11 @@ func GetExtraLoader(id Id) ExtraLoader {
 func RegisterExtraLoader(id Id, loader ExtraLoader) {
 	loaders[id] = loader
 }
+
+func DescribeBlocks(o packed.Output) {
+	o.WriteVarUint32(uint32(maxId))
+	for i := Id(0); i < maxId; i++ {
+		o.WriteString(registry[i].Name)
+		o.WriteUint8(uint8(registry[i].Attributes))
+	}
+}
