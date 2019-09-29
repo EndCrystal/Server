@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"net/url"
@@ -18,6 +17,7 @@ import (
 	plug "github.com/EndCrystal/Server/plugin"
 	"github.com/EndCrystal/Server/token"
 	"github.com/EndCrystal/Server/world/storage"
+	go_up "github.com/ufoscout/go-up"
 )
 
 type ChatMessage struct {
@@ -37,13 +37,13 @@ var log = logprefix.Get("[main] ")
 
 func main() {
 	var err error
-	flag.Parse()
+	loadConfig()
 	err = loadMainStorage()
 	if err != nil {
-		log.Fatalf("Failed to load main storage: %s", *storage_path)
+		log.Fatalf("Failed to load main storage: %s", config.storage_path)
 	}
 	defer storage.MainStorage.Close()
-	err = loadPluginFromMulti(strings.Split(*plugin_home, ":")...)
+	err = loadPluginFromMulti(config.plugin_home...)
 	if err != nil {
 		pluginStats()
 		log.Fatalf("Failed to load plugins: %v", err)
@@ -65,13 +65,13 @@ func main() {
 
 	var server network.Server
 	var endpoint_url *url.URL
-	endpoint_url, err = url.Parse(*endpoint)
+	endpoint_url, err = url.Parse(config.endpoint)
 	if err != nil {
 		log.Fatalf("Failed to parse endpoint url: %v", err)
 	}
 	server, err = network.CreateServer(endpoint_url)
 	if err != nil {
-		log.Fatalf("Failed to create server for this endpoint (%s): %v", *endpoint, err)
+		log.Fatalf("Failed to create server for this endpoint (%s): %v", config.endpoint, err)
 	}
 	defer server.Stop()
 	done := make(chan struct{})
@@ -85,29 +85,50 @@ func main() {
 	}
 }
 
-var endpoint = flag.String("endpoint", "ws://0.0.0.0:2480", "Server Endpoint")
-var plugin_home = flag.String("plugin-dirs", "plugins:"+filepath.Join(os.Getenv("HOME"), ".local", "share", "EndCrystal", "plugins"), "Plugin directories")
-var pubkey_path = flag.String("pubkey", "key.pub", "Path to server pubkey")
-var server_id = flag.String("server-id", "default", "Server Id")
-var connection_timeout = flag.Duration("verify-timeout", time.Second*10, "Timeout for verify login packet")
-var storage_path = flag.String("storage", "endcrystal.db", "Path to EndCrystal Main Storage")
+func loadConfig() {
+	log := logprefix.Get("[config loader] ")
+	up, err := go_up.NewGoUp().
+		AddFile("/etc/EndCrystal/config.properties", true).
+		AddFile(filepath.Join(os.Getenv("HOME"), ".config", "EndCrystal", "config.properties"), true).
+		AddFile("config.properties", true).
+		AddReader(go_up.NewEnvReader("EC_", true, true)).
+		Build()
+	if err != nil {
+		log.Fatalf("Failed to load config %v", err)
+	}
+	config.endpoint = up.GetStringOrDefault("endpoint", "ws://0.0.0.0:2480")
+	config.pubkey_path = up.GetStringOrDefault("pubkey.path", "key.pub")
+	config.plugin_home = up.GetStringSliceOrDefault("plugin", ":", []string{"plugins", filepath.Join(os.Getenv("HOME"), ".local", "share", "EndCrystal", "plugins")})
+	config.id = up.GetStringOrDefault("id", "default")
+	config.connection_timeout = time.Duration(up.GetIntOrDefault("connection.timeout", 10)) * time.Second
+	config.storage_path = up.GetStringOrDefault("storage", "EndCrystal.bbolt")
+}
+
+var config struct {
+	endpoint           string
+	plugin_home        []string
+	pubkey_path        string
+	id                 string
+	connection_timeout time.Duration
+	storage_path       string
+}
 
 func loadMainStorage() (err error) {
-	storage.MainStorage, err = storage.Open(*storage_path)
+	storage.MainStorage, err = storage.Open(config.storage_path)
 	return
 }
 
 func loadPubKey() (verifier token.TokenVerifier, err error) {
 	log := logprefix.Get("[pubkey loader] ")
-	log.Printf("Loading from %s", *pubkey_path)
-	stat, err := os.Stat(*pubkey_path)
+	log.Printf("Loading from %s", config.pubkey_path)
+	stat, err := os.Stat(config.pubkey_path)
 	if err != nil {
 		return
 	}
 	if stat.Size() != int64(token.PubKeyLen) {
 		return nil, fmt.Errorf("Failed to load pubkey: size mismatch")
 	}
-	data, err := ioutil.ReadFile(*pubkey_path)
+	data, err := ioutil.ReadFile(config.pubkey_path)
 	if err != nil {
 		return
 	}

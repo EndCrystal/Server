@@ -100,7 +100,7 @@ func processLogin(instance network.ClientInstance) (state clientState, err error
 		err = fmt.Errorf("Cannot read payload")
 		return
 	}
-	if payload.ServerId != *server_id {
+	if payload.ServerId != config.id {
 		err = fmt.Errorf("Server id mismatch")
 		return
 	}
