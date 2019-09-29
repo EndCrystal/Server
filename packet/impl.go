@@ -32,6 +32,7 @@ const (
 	IdGameStart
 	IdChat
 	IdText
+	IdChunkRequest
 	IdChunkData
 )
 

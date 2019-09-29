@@ -19,6 +19,8 @@ func Parse(in packed.Input, ctx *ParseContext) (pkt ReceiveOnlyPacket) {
 		pkt = new(LoginPacket)
 	case IdChat:
 		pkt = new(ChatPacket)
+	case IdChunkRequest:
+		pkt = new(ChunkRequestPacket)
 	default:
 		panic(EUnknownPacket)
 	}
