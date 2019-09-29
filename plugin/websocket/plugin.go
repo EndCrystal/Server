@@ -63,6 +63,7 @@ func (c Client) SendPacket(pkt packet.SendOnlyPacket) (err error) {
 	}()
 	buf := bufpool.Get().(*bytes.Buffer)
 	defer bufpool.Put(buf)
+	buf.Reset()
 	o := packed.MakeOutput(buf)
 	packet.WritePacket(pkt, o)
 	err = c.source.Write(context.TODO(), websocket.MessageBinary, buf.Bytes())
