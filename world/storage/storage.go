@@ -48,7 +48,9 @@ func (s StorageForConfig) Get(key string) (ret []byte) {
 			}
 		}
 		bkt := ifc.(*bbolt.Bucket)
-		ret = bkt.Get([]byte(key))
+		tmp := bkt.Get([]byte(key))
+		ret = make([]byte, len(tmp))
+		copy(ret, tmp)
 		return nil
 	})
 	return
