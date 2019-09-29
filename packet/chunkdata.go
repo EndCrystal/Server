@@ -2,6 +2,7 @@ package packet
 
 import (
 	"bytes"
+	"compress/zlib"
 	"sync"
 
 	packed "github.com/EndCrystal/PackedIO"
@@ -22,15 +23,17 @@ var chunkdataPool = sync.Pool{
 func (pkt *ChunkDataPacket) SetData(data *chunk.Chunk) func() {
 	buf := chunkdataPool.Get().(*bytes.Buffer)
 	buf.Reset()
-	o := packed.MakeOutput(buf)
+	w, _ := zlib.NewWriterLevel(buf, zlib.BestCompression)
+	o := packed.MakeOutput(w)
 	data.Save(o)
+	w.Close()
 	pkt.cache = buf.Bytes()
 	return func() { chunkdataPool.Put(buf) }
 }
 
 func (pkt ChunkDataPacket) Save(out packed.Output) {
 	pkt.Pos.Save(out)
-	out.WriteFixedBytes(pkt.cache)
+	out.WriteBytes(pkt.cache)
 }
 
 func (ChunkDataPacket) PacketId() PacketId { return IdChunkData }
