@@ -2,19 +2,22 @@ package packet
 
 import (
 	packed "github.com/EndCrystal/PackedIO"
+	"github.com/EndCrystal/Server/world/chunk"
 	"github.com/EndCrystal/Server/world/components"
 )
 
 type GameStartPacket struct {
-	Username string
-	Label    string
-	Motd     string
+	Username        string
+	Label           string
+	Motd            string
+	InitialPosition chunk.ChunkPos
 }
 
 func (pkt GameStartPacket) Save(out packed.Output) {
 	out.WriteString(pkt.Username)
 	out.WriteString(pkt.Label)
 	out.WriteString(pkt.Motd)
+	pkt.InitialPosition.Save(out)
 	components.DescribeComponents(out)
 }
 

@@ -4,10 +4,15 @@ import (
 	"fmt"
 	"time"
 
+	packed "github.com/EndCrystal/PackedIO"
 	"github.com/EndCrystal/Server/common"
 	"github.com/EndCrystal/Server/logprefix"
 	"github.com/EndCrystal/Server/network"
 	"github.com/EndCrystal/Server/packet"
+	"github.com/EndCrystal/Server/user"
+	"github.com/EndCrystal/Server/world/chunk"
+	"github.com/EndCrystal/Server/world/dim"
+	"github.com/EndCrystal/Server/world/storage"
 )
 
 func loop(ch <-chan network.ClientInstance, done chan<- struct{}) {
@@ -17,8 +22,9 @@ func loop(ch <-chan network.ClientInstance, done chan<- struct{}) {
 	done <- struct{}{}
 }
 
-type clientState struct {
-	username string
+type UserInfoWithClient struct {
+	network.ClientInstance
+	*user.UserInfo
 }
 
 func processClient(instance network.ClientInstance) {
@@ -36,31 +42,35 @@ func processClient(instance network.ClientInstance) {
 		}
 		instance.Disconnect()
 	}()
-	var state clientState
+	var state user.UserInfo
 	var err error
 	state, err = processLoginWithTimeout(instance, 5*time.Second)
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("Player %s joined: %v", state.username, instance.GetIdentifier())
-	global.users.Store(state.username, instance)
-	defer global.users.Delete(state.username)
+	log.Printf("Player %s joined: %v", state.Username, instance.GetIdentifier())
+	defer log.Printf("Player %s left: %v", state.Username, instance.GetIdentifier())
+	global.users.Store(state.Username, UserInfoWithClient{instance, &state})
+	defer global.users.Delete(state.Username)
+
 	var startpacket packet.GameStartPacket
-	startpacket.Username = state.username
-	startpacket.Label = common.Value.UserLabelHandler(state.username, instance.GetIdentifier())
-	startpacket.Motd = common.Value.ServerMotdHandler(state.username, instance.GetIdentifier())
+	startpacket.Username = state.Username
+	startpacket.Label = common.Value.UserLabelHandler(state.Username, instance.GetIdentifier())
+	startpacket.Motd = common.Value.ServerMotdHandler(state.Username, instance.GetIdentifier())
+	startpacket.InitialPosition = state.Pos
 	instance.SendPacket(&startpacket)
+
 	fetcher := instance.GetFetcher()
 	for packet := range fetcher {
 		processPacket(instance, &state, packet)
 	}
 }
 
-func processLoginWithTimeout(instance network.ClientInstance, timeout time.Duration) (state clientState, err error) {
-	statech := make(chan clientState)
+func processLoginWithTimeout(instance network.ClientInstance, timeout time.Duration) (state user.UserInfo, err error) {
+	statech := make(chan user.UserInfo)
 	errch := make(chan error)
 	go func() {
-		var state clientState
+		var state user.UserInfo
 		var err error
 		state, err = processLogin(instance)
 		if err != nil {
@@ -80,7 +90,7 @@ func processLoginWithTimeout(instance network.ClientInstance, timeout time.Durat
 	return
 }
 
-func processLogin(instance network.ClientInstance) (state clientState, err error) {
+func processLogin(instance network.ClientInstance) (state user.UserInfo, err error) {
 	pkt, ok := <-instance.GetFetcher()
 	if !ok {
 		err = fmt.Errorf("failed to login")
@@ -116,18 +126,55 @@ func processLogin(instance network.ClientInstance) (state clientState, err error
 		err = fmt.Errorf("Forbidden login")
 		return
 	}
-	state.username = payload.Username
+	state.Username = payload.Username
+	state.UserLabel = common.Value.UserLabelHandler(state.Username, instance.GetIdentifier())
+	var dim_name string
+	var user_config = storage.MainStorage.ForConfig("user")
+	if data := user_config.Get(state.Username); data != nil {
+		// TODO: Just placeholder
+		i := packed.InputFromBuffer(data)
+		dim_name = i.ReadString()
+		state.Pos.Load(i)
+	} else {
+		dim_name = config.spawnpoint.dimension
+		state.Pos = config.spawnpoint.pos
+	}
+	if state.Dimension, ok = dim.LookupDimension(dim_name); !ok {
+		panic(fmt.Errorf("Failed to load dimension %v", dim_name))
+	}
 	return
 }
 
-func processPacket(instance network.ClientInstance, state *clientState, pkt packet.ReceiveOnlyPacket) {
+func processPacket(instance network.ClientInstance, state *user.UserInfo, pkt packet.ReceiveOnlyPacket) {
 	switch p := pkt.(type) {
 	case *packet.LoginPacket:
 		panic(fmt.Errorf("State mismatch"))
 	case *packet.ChatPacket:
 		msg := p.Message
-		global.chat <- ChatMessage{state.username, msg}
+		global.chat <- ChatMessage{state.Username, msg}
+	case *packet.ChunkRequestPacket:
+		go fetchChunkForUser(instance, state, p.Pos)
 	default:
 		panic(fmt.Errorf("Unknown packet"))
 	}
+}
+
+func fetchChunkForUser(instance network.ClientInstance, state *user.UserInfo, pos chunk.ChunkPos) {
+	defer func(n time.Time) {
+		fmt.Printf("Locked for %v\n", time.Since(n))
+	}(time.Now())
+	data, err := state.Dimension.GetChunk(pos)
+	if err != nil {
+		fmt.Printf("Failed to load chunk (@%+v) for user %s", pos, state.Username)
+		return
+	}
+	defer data.Access()()
+	pkt := packet.ChunkDataPacket{
+		Pos: pos,
+	}
+	dest := pkt.SetData(data.Chunk)
+	go func() {
+		instance.SendPacket(pkt)
+		dest()
+	}()
 }

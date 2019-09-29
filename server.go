@@ -16,6 +16,7 @@ import (
 	"github.com/EndCrystal/Server/network"
 	plug "github.com/EndCrystal/Server/plugin"
 	"github.com/EndCrystal/Server/token"
+	"github.com/EndCrystal/Server/world/chunk"
 	"github.com/EndCrystal/Server/world/storage"
 	go_up "github.com/ufoscout/go-up"
 )
@@ -87,21 +88,33 @@ func main() {
 
 func loadConfig() {
 	log := logprefix.Get("[config loader] ")
+	var err error
+	checkerr := func() {
+		if err != nil {
+			log.Fatalf("Failed to load config: %v", err)
+		}
+	}
 	up, err := go_up.NewGoUp().
 		AddFile("/etc/EndCrystal/config.properties", true).
 		AddFile(filepath.Join(os.Getenv("HOME"), ".config", "EndCrystal", "config.properties"), true).
 		AddFile("config.properties", true).
 		AddReader(go_up.NewEnvReader("EC_", true, true)).
 		Build()
-	if err != nil {
-		log.Fatalf("Failed to load config %v", err)
-	}
+	checkerr()
 	config.endpoint = up.GetStringOrDefault("endpoint", "ws://0.0.0.0:2480")
 	config.pubkey_path = up.GetStringOrDefault("pubkey.path", "key.pub")
 	config.plugin_home = up.GetStringSliceOrDefault("plugin", ":", []string{"plugins", filepath.Join(os.Getenv("HOME"), ".local", "share", "EndCrystal", "plugins")})
 	config.id = up.GetStringOrDefault("id", "default")
 	config.connection_timeout = time.Duration(up.GetIntOrDefault("connection.timeout", 10)) * time.Second
 	config.storage_path = up.GetStringOrDefault("storage", "EndCrystal.bbolt")
+	config.spawnpoint.dimension, err = up.GetStringOrFail("spawnpoint.dimension")
+	checkerr()
+
+	{
+		var pos string
+		pos, err = up.GetStringOrFail("spawnpoint.pos")
+		fmt.Sscanf(pos, "%d:%d", &config.spawnpoint.pos.X, &config.spawnpoint.pos.Z)
+	}
 }
 
 var config struct {
@@ -111,6 +124,10 @@ var config struct {
 	id                 string
 	connection_timeout time.Duration
 	storage_path       string
+	spawnpoint         struct {
+		dimension string
+		pos       chunk.ChunkPos
+	}
 }
 
 func loadMainStorage() (err error) {
