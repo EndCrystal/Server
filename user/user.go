@@ -1,7 +1,6 @@
 package user
 
 import (
-	"container/list"
 	"sync"
 
 	"github.com/EndCrystal/Server/world/chunk"
@@ -20,32 +19,10 @@ type UserInfo struct {
 	Dimension        *dim.Dimension
 	ControllingActor Id
 	Pos              chunk.ChunkPos
-	events           list.List
 }
 
 func (info UserInfo) GetChunkPosition() chunk.ChunkPos {
 	return info.Pos
-}
-
-func (info UserInfo) AddEvent(event Event) {
-	info.events.PushBack(event)
-}
-
-func (info UserInfo) HandleEvent(fn func(Event) bool) {
-	e := info.events.Front()
-	for e != nil {
-		if fn(e.Value.(Event)) {
-			next := e.Next()
-			info.events.Remove(e)
-			e = next
-		} else {
-			e = e.Next()
-		}
-	}
-}
-
-func (info UserInfo) ClearEvents() {
-	info.events.Init()
 }
 
 var users = make(map[string]*UserInfo)

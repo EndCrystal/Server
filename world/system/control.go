@@ -25,14 +25,16 @@ func (s ControlSystem) Remove(id Id) {
 	delete(s, id)
 }
 
-func (s ControlSystem) Update() {
+func (s ControlSystem) Update() (list []actor.Actor) {
 	for _, comp := range s {
 		select {
 		case mix := <-comp.Controllable().ControlRequest:
 			comp.RuntimeComponentMap()[components.UserControlId] = components.UserControl{Owner: mix.Source}
+			list = append(list, comp.Actor)
 		default:
 		}
 	}
+	return
 }
 
 func init() {
