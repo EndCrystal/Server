@@ -111,8 +111,9 @@ func (chk Chunk) Save(out packed.Output) {
 	for ins, count := range maps {
 		list[i].ins = ins
 		list[i].count = count
+		i++
 	}
-	sort.Slice(list, func(a int, b int) bool { return list[i].count < list[i].count })
+	sort.Slice(list, func(a int, b int) bool { return list[a].count < list[b].count })
 	rmap := make(map[block.Instance]int)
 	out.WriteVarUint32(uint32(num))
 	for i, tpl := range list {
