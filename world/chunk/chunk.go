@@ -20,6 +20,23 @@ func (cp ChunkPos) Save(out packed.Output) {
 	out.WriteInt32(cp.Z)
 }
 
+func abs(x int32) uint32 {
+	r := x >> 31
+	return uint32((x ^ r) - r)
+}
+
+func max(a, b uint32) (r uint32) {
+	if a > b {
+		return a
+	} else {
+		return b
+	}
+}
+
+func (cp ChunkPos) Distance(oth ChunkPos) uint32 {
+	return max(abs(cp.X-oth.X), abs(cp.Z-oth.Z))
+}
+
 type BlockPos uint16
 
 func Pos(x, y, z uint8) BlockPos {

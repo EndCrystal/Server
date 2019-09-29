@@ -6,6 +6,7 @@ import (
 )
 
 type Map struct {
+	mtx       sync.Mutex
 	inited    bool
 	storage   Storage
 	generator Generator
@@ -23,6 +24,8 @@ func (m *Map) Init(storage Storage, generator Generator) {
 }
 
 func (m *Map) GetChunk(pos ChunkPos) (ret *ChunkRef, err error) {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
 	// lookup cache
 	var ok bool
 	if ret, ok = m.loaded[pos]; ok {

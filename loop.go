@@ -57,6 +57,7 @@ func processClient(instance network.ClientInstance) {
 	startpacket.Username = state.Username
 	startpacket.Label = common.Value.UserLabelHandler(state.Username, instance.GetIdentifier())
 	startpacket.Motd = common.Value.ServerMotdHandler(state.Username, instance.GetIdentifier())
+	startpacket.MaxViewDistance = config.view_distance
 	startpacket.InitialPosition = state.Pos
 	instance.SendPacket(&startpacket)
 
@@ -147,15 +148,21 @@ func processLogin(instance network.ClientInstance) (state user.UserInfo, err err
 
 func processPacket(instance network.ClientInstance, state *user.UserInfo, pkt packet.ReceiveOnlyPacket) {
 	switch p := pkt.(type) {
+	case *packet.BatchPacket:
+		for _, sub := range p.ReceivedPackets {
+			processPacket(instance, state, sub)
+		}
 	case *packet.LoginPacket:
 		panic(fmt.Errorf("State mismatch"))
 	case *packet.ChatPacket:
 		msg := p.Message
 		global.chat <- ChatMessage{state.Username, msg}
 	case *packet.ChunkRequestPacket:
-		go fetchChunkForUser(instance, state, p.Pos)
+		if state.Pos.Distance(p.Pos) <= config.view_distance {
+			fetchChunkForUser(instance, state, p.Pos)
+		}
 	default:
-		panic(fmt.Errorf("Unknown packet"))
+		panic(fmt.Errorf("Unknown packet %T", p))
 	}
 }
 

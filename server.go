@@ -109,6 +109,7 @@ func loadConfig() {
 	config.storage_path = up.GetStringOrDefault("storage", "EndCrystal.bbolt")
 	config.spawnpoint.dimension, err = up.GetStringOrFail("spawnpoint.dimension")
 	checkerr()
+	config.view_distance = uint32(up.GetIntOrDefault("view-distance", 8))
 
 	{
 		var pos string
@@ -124,6 +125,7 @@ var config struct {
 	id                 string
 	connection_timeout time.Duration
 	storage_path       string
+	view_distance      uint32
 	spawnpoint         struct {
 		dimension string
 		pos       chunk.ChunkPos

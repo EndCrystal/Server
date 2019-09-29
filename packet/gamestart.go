@@ -11,6 +11,7 @@ type GameStartPacket struct {
 	Username        string
 	Label           string
 	Motd            string
+	MaxViewDistance uint32
 	InitialPosition chunk.ChunkPos
 }
 
@@ -18,6 +19,7 @@ func (pkt GameStartPacket) Save(out packed.Output) {
 	out.WriteString(pkt.Username)
 	out.WriteString(pkt.Label)
 	out.WriteString(pkt.Motd)
+	out.WriteVarUint32(pkt.MaxViewDistance)
 	pkt.InitialPosition.Save(out)
 	block.DescribeBlocks(out)
 	components.DescribeComponents(out)
