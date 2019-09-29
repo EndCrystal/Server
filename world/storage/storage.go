@@ -40,9 +40,11 @@ func (s StorageForConfig) Get(key string) (ret []byte) {
 	s.db.View(func(tx *bbolt.Tx) error {
 		var ifc interface{ Bucket([]byte) *bbolt.Bucket } = tx
 		for _, item := range s.path {
-			ifc = ifc.Bucket([]byte(item))
-			if ifc == nil {
+			bkt := ifc.Bucket([]byte(item))
+			if bkt == nil {
 				return nil
+			} else {
+				ifc = bkt
 			}
 		}
 		bkt := ifc.(*bbolt.Bucket)
