@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -45,13 +46,14 @@ type Client struct {
 	mtx      *sync.Mutex
 }
 
+var bufpool = sync.Pool{
+	New: func() interface{} {
+		return new(bytes.Buffer)
+	},
+}
+
 func (c Client) SendPacket(pkt packet.SendOnlyPacket) (err error) {
-	writter, err := c.source.Writer(context.TODO(), websocket.MessageBinary)
-	if err != nil {
-		return err
-	}
 	defer func() {
-		err = writter.Close()
 		if e := recover(); e != nil {
 			var ok bool
 			if err, ok = e.(error); !ok {
@@ -59,10 +61,11 @@ func (c Client) SendPacket(pkt packet.SendOnlyPacket) (err error) {
 			}
 		}
 	}()
-	out := packed.MakeOutput(writter)
-	c.mtx.Lock()
-	defer c.mtx.Unlock()
-	packet.WritePacket(pkt, out)
+	buf := bufpool.Get().(*bytes.Buffer)
+	defer bufpool.Put(buf)
+	o := packed.MakeOutput(buf)
+	packet.WritePacket(pkt, o)
+	err = c.source.Write(context.TODO(), websocket.MessageBinary, buf.Bytes())
 	return
 }
 func (c Client) GetFetcher() <-chan packet.ReceiveOnlyPacket { return c.fetcher }
