@@ -9,10 +9,6 @@ import (
 	. "github.com/EndCrystal/Server/types"
 )
 
-type Event interface {
-	EventName() string
-}
-
 type UserInfo struct {
 	Username         string
 	UserLabel        string
