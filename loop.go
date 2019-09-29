@@ -160,9 +160,6 @@ func processPacket(instance network.ClientInstance, state *user.UserInfo, pkt pa
 }
 
 func fetchChunkForUser(instance network.ClientInstance, state *user.UserInfo, pos chunk.ChunkPos) {
-	defer func(n time.Time) {
-		fmt.Printf("Locked for %v\n", time.Since(n))
-	}(time.Now())
 	data, err := state.Dimension.GetChunk(pos)
 	if err != nil {
 		fmt.Printf("Failed to load chunk (@%+v) for user %s", pos, state.Username)
