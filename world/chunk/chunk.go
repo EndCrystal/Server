@@ -57,8 +57,8 @@ func (p BlockPos) Y() uint8 { return uint8(p / 256) }
 // <Extra data>
 // (length: varuint32) * { (position: uint16) (extradata: data) }
 type Chunk struct {
-	Blocks     [^BlockPos(0)]block.Instance
-	Background [^BlockPos(0)]block.Instance
+	Blocks     [65536]block.Instance
+	Background [65536]block.Instance
 	ExtraData  map[BlockPos]packed.Serializable
 }
 
@@ -86,14 +86,14 @@ func (chk *Chunk) Load(in packed.Input) {
 		}
 	})
 	lmaps := uint32(len(maps))
-	for i := BlockPos(0); i < ^BlockPos(0); i++ {
+	for i := BlockPos(0); i <= ^BlockPos(0); i++ {
 		idx := in.ReadVarUint32()
 		if idx >= lmaps {
 			panic(ECorruptedData)
 		}
 		chk.Blocks[i] = maps[idx]
 	}
-	for i := BlockPos(0); i < ^BlockPos(0); i++ {
+	for i := BlockPos(0); i <= ^BlockPos(0); i++ {
 		idx := in.ReadVarUint32()
 		if idx >= lmaps {
 			panic(ECorruptedData)
@@ -130,7 +130,7 @@ func (chk Chunk) Save(out packed.Output) {
 		list[i].count = count
 		i++
 	}
-	sort.Slice(list, func(a int, b int) bool { return list[a].count < list[b].count })
+	sort.Slice(list, func(a int, b int) bool { return list[a].count > list[b].count })
 	rmap := make(map[block.Instance]int)
 	out.WriteVarUint32(uint32(num))
 	for i, tpl := range list {
