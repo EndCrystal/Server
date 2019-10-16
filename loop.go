@@ -22,9 +22,9 @@ func loop(ch <-chan network.ClientInstance, done chan<- struct{}) {
 	done <- struct{}{}
 }
 
-type UserInfoWithClient struct {
+type userInfoWithClient struct {
 	network.ClientInstance
-	*user.UserInfo
+	*user.Info
 }
 
 func processClient(instance network.ClientInstance) {
@@ -42,7 +42,7 @@ func processClient(instance network.ClientInstance) {
 		}
 		instance.Disconnect()
 	}()
-	var state user.UserInfo
+	var state user.Info
 	var err error
 	state, err = processLoginWithTimeout(instance, 5*time.Second)
 	if err != nil {
@@ -50,14 +50,14 @@ func processClient(instance network.ClientInstance) {
 	}
 	log.Printf("Player %s joined: %v", state.Username, instance.GetIdentifier())
 	defer log.Printf("Player %s left: %v", state.Username, instance.GetIdentifier())
-	global.users.Store(state.Username, UserInfoWithClient{instance, &state})
+	global.users.Store(state.Username, userInfoWithClient{instance, &state})
 	defer global.users.Delete(state.Username)
 
 	var startpacket packet.GameStartPacket
 	startpacket.Username = state.Username
 	startpacket.Label = common.Value.UserLabelHandler(state.Username, instance.GetIdentifier())
 	startpacket.Motd = common.Value.ServerMotdHandler(state.Username, instance.GetIdentifier())
-	startpacket.MaxViewDistance = config.view_distance
+	startpacket.MaxViewDistance = config.viewDistance
 	startpacket.InitialPosition = state.Pos
 	instance.SendPacket(&startpacket)
 
@@ -67,11 +67,11 @@ func processClient(instance network.ClientInstance) {
 	}
 }
 
-func processLoginWithTimeout(instance network.ClientInstance, timeout time.Duration) (state user.UserInfo, err error) {
-	statech := make(chan user.UserInfo)
+func processLoginWithTimeout(instance network.ClientInstance, timeout time.Duration) (state user.Info, err error) {
+	statech := make(chan user.Info)
 	errch := make(chan error)
 	go func() {
-		var state user.UserInfo
+		var state user.Info
 		var err error
 		state, err = processLogin(instance)
 		if err != nil {
@@ -91,27 +91,27 @@ func processLoginWithTimeout(instance network.ClientInstance, timeout time.Durat
 	return
 }
 
-func processLogin(instance network.ClientInstance) (state user.UserInfo, err error) {
+func processLogin(instance network.ClientInstance) (state user.Info, err error) {
 	pkt, ok := <-instance.GetFetcher()
 	if !ok {
 		err = fmt.Errorf("failed to login")
 		return
 	}
-	login_pkt, ok := pkt.(*packet.LoginPacket)
+	loginPacket, ok := pkt.(*packet.LoginPacket)
 	if !ok {
 		err = fmt.Errorf("failed to login: the first packet should be LoginPacket")
 		return
 	}
-	if !login_pkt.Verify(global.verfier) {
+	if !loginPacket.Verify(global.verfier) {
 		err = fmt.Errorf("Verify failed")
 		return
 	}
-	payload, ok := login_pkt.Read()
+	payload, ok := loginPacket.Read()
 	if !ok {
 		err = fmt.Errorf("Cannot read payload")
 		return
 	}
-	if payload.ServerId != config.id {
+	if payload.ServerID != config.id {
 		err = fmt.Errorf("Server id mismatch")
 		return
 	}
@@ -129,24 +129,24 @@ func processLogin(instance network.ClientInstance) (state user.UserInfo, err err
 	}
 	state.Username = payload.Username
 	state.UserLabel = common.Value.UserLabelHandler(state.Username, instance.GetIdentifier())
-	var dim_name string
-	var user_config = storage.MainStorage.ForConfig("user")
-	if data := user_config.Get(state.Username); data != nil {
+	var dimensionName string
+	var userConfig = storage.MainStorage.ForConfig("user")
+	if data := userConfig.Get(state.Username); data != nil {
 		// TODO: Just placeholder
 		i := packed.InputFromBuffer(data)
-		dim_name = i.ReadString()
+		dimensionName = i.ReadString()
 		state.Pos.Load(i)
 	} else {
-		dim_name = config.spawnpoint.dimension
+		dimensionName = config.spawnpoint.dimension
 		state.Pos = config.spawnpoint.pos
 	}
-	if state.Dimension, ok = dim.LookupDimension(dim_name); !ok {
-		panic(fmt.Errorf("Failed to load dimension %v", dim_name))
+	if state.Dimension, ok = dim.LookupDimension(dimensionName); !ok {
+		panic(fmt.Errorf("Failed to load dimension %v", dimensionName))
 	}
 	return
 }
 
-func processPacket(instance network.ClientInstance, state *user.UserInfo, pkt packet.ReceiveOnlyPacket) {
+func processPacket(instance network.ClientInstance, state *user.Info, pkt packet.ReceiveOnlyPacket) {
 	switch p := pkt.(type) {
 	case *packet.BatchPacket:
 		for _, sub := range p.ReceivedPackets {
@@ -156,9 +156,9 @@ func processPacket(instance network.ClientInstance, state *user.UserInfo, pkt pa
 		panic(fmt.Errorf("State mismatch"))
 	case *packet.ChatPacket:
 		msg := p.Message
-		global.chat <- ChatMessage{state.Username, msg}
+		global.chat <- chatMessage{state.Username, msg}
 	case *packet.ChunkRequestPacket:
-		if state.Pos.Distance(p.Pos) <= config.view_distance {
+		if state.Pos.Distance(p.Pos) <= config.viewDistance {
 			fetchChunkForUser(instance, state, p.Pos)
 		}
 	default:
@@ -166,7 +166,7 @@ func processPacket(instance network.ClientInstance, state *user.UserInfo, pkt pa
 	}
 }
 
-func fetchChunkForUser(instance network.ClientInstance, state *user.UserInfo, pos chunk.ChunkPos) {
+func fetchChunkForUser(instance network.ClientInstance, state *user.Info, pos chunk.CPos) {
 	data, err := state.Dimension.GetChunk(pos)
 	if err != nil {
 		fmt.Printf("Failed to load chunk (@%+v) for user %s", pos, state.Username)

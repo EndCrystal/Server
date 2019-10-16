@@ -7,14 +7,16 @@ import (
 	"github.com/EndCrystal/Server/world/components"
 )
 
+// GameStartPacket game start packet
 type GameStartPacket struct {
 	Username        string
 	Label           string
 	Motd            string
 	MaxViewDistance uint32
-	InitialPosition chunk.ChunkPos
+	InitialPosition chunk.CPos
 }
 
+// Save save to data
 func (pkt GameStartPacket) Save(out packed.Output) {
 	out.WriteString(pkt.Username)
 	out.WriteString(pkt.Label)
@@ -25,4 +27,5 @@ func (pkt GameStartPacket) Save(out packed.Output) {
 	components.DescribeComponents(out)
 }
 
-func (pkt GameStartPacket) PacketId() PacketId { return IdGameStart }
+// PacketID id
+func (pkt GameStartPacket) PacketID() PID { return IDGameStart }

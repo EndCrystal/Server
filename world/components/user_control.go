@@ -4,6 +4,8 @@ import (
 	"github.com/EndCrystal/Server/user"
 )
 
-type UserControl struct{ Owner *user.UserInfo }
+// UserControl control component
+type UserControl struct{ Owner *user.Info }
 
-var UserControlId = RegisterRuntime("core:user_control", (*UserControl)(nil), nil)
+// UserControlID id
+var UserControlID = RegisterRuntime("core:user_control", (*UserControl)(nil), nil)

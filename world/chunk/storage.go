@@ -2,9 +2,11 @@ package chunk
 
 import "errors"
 
-var EChunkNotFound = errors.New("Chunk not found")
+// ErrChunkNotFound Chunk not found
+var ErrChunkNotFound = errors.New("Chunk not found")
 
+// Storage chunk storage
 type Storage interface {
-	LoadChunk(pos ChunkPos) (*Chunk, error)
-	SaveChunk(pos ChunkPos, data *Chunk) error
+	LoadChunk(pos CPos) (*Chunk, error)
+	SaveChunk(pos CPos, data *Chunk) error
 }

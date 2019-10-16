@@ -6,36 +6,51 @@ import (
 	"plugin"
 )
 
-var EIncompatiablePlugin = errors.New("Incomparable plugin")
-var EConflictPlugin = errors.New("Conflict plugin")
-var EInvalidPluginId = errors.New("Invalid plugin id")
-var EInvalidResolver = errors.New("Invalid plugin resolver")
+// ErrIncompatiablePlugin Incomparable plugin
+var ErrIncompatiablePlugin = errors.New("Incomparable plugin")
 
-type EBrokenDependencies struct{ Name, Source string }
+// ErrConflictPlugin Conflict plugin
+var ErrConflictPlugin = errors.New("Conflict plugin")
 
-func (e EBrokenDependencies) Error() string {
+// ErrInvalidPluginID Invalid plugin id
+var ErrInvalidPluginID = errors.New("Invalid plugin id")
+
+// ErrInvalidResolver Invalid plugin resolver
+var ErrInvalidResolver = errors.New("Invalid plugin resolver")
+
+// ErrBrokenDependencies broken dependency
+type ErrBrokenDependencies struct{ Name, Source string }
+
+func (e ErrBrokenDependencies) Error() string {
 	return fmt.Sprintf("Broken dependency: %s not found (required by %s)", e.Name, e.Source)
 }
 
-type EInvalidPlugin struct{ wrapped error }
+// ErrInvalidPlugin Invalid plugin
+type ErrInvalidPlugin struct{ wrapped error }
 
-func (e EInvalidPlugin) Unwrap() error { return e.wrapped }
-func (e EInvalidPlugin) Error() string { return fmt.Sprintf("Invalid plugin: %v", e.wrapped) }
+// Unwrap unwrap for nested error
+func (e ErrInvalidPlugin) Unwrap() error { return e.wrapped }
+func (e ErrInvalidPlugin) Error() string { return fmt.Sprintf("Invalid plugin: %v", e.wrapped) }
 
+// PluginInfo basic plugin info
 type PluginInfo struct {
 	*plugin.Plugin
 	dependencies []string
 	fn           func(PluginInterface) error
 }
 
+// PendingPlugins plugins that pending to load
 var PendingPlugins = make(map[string]*PluginInfo)
+
+// LoadedPlugins loaded plugins
 var LoadedPlugins = make(map[string]*PluginInfo)
 
+// PluginSystemVersion plugin system version
 const PluginSystemVersion = 0
 
-// Load plugin from path
+// LoadPlugin Load plugin from path
 // plugin sample:
-// var PluginId string = "My test mod"
+// var PluginID string = "My test mod"
 // var Dependencies []string
 // func PluginMain(plug.PluginInterface) error
 func LoadPlugin(path string) error {
@@ -43,25 +58,25 @@ func LoadPlugin(path string) error {
 	if err != nil {
 		return err
 	}
-	sname, err := p.Lookup("PluginId")
+	sname, err := p.Lookup("PluginID")
 	if err != nil {
-		return EInvalidPlugin{err}
+		return ErrInvalidPlugin{err}
 	}
 	pname, ok := sname.(*string)
 	if !ok {
-		return EInvalidPlugin{EInvalidPluginId}
+		return ErrInvalidPlugin{ErrInvalidPluginID}
 	}
 	name := *pname
 	if _, ok := LoadedPlugins[name]; ok {
-		return EConflictPlugin
+		return ErrConflictPlugin
 	}
 	deps, err := loadPluginDependencies(p)
 	if err != nil {
-		return EInvalidPlugin{err}
+		return ErrInvalidPlugin{err}
 	}
 	fn, err := loadPluginMain(p, "PluginMain", "PluginMainV0")
 	if err != nil {
-		return EInvalidPlugin{err}
+		return ErrInvalidPlugin{err}
 	}
 	PendingPlugins[name] = &PluginInfo{Plugin: p, dependencies: deps, fn: fn}
 	return nil
@@ -84,7 +99,7 @@ func sortPlugins(ch chan<- *PluginInfo) error {
 					LoadedPlugins[item] = pp
 					delete(PendingPlugins, item)
 				} else {
-					return EBrokenDependencies{item, source}
+					return ErrBrokenDependencies{item, source}
 				}
 			}
 		}
@@ -99,6 +114,7 @@ func sortPlugins(ch chan<- *PluginInfo) error {
 	return visitAll("", rootdeps)
 }
 
+// ApplyPlugin apply plugins
 func ApplyPlugin(pifce PluginInterface) error {
 	ch := make(chan *PluginInfo)
 	errch := make(chan error)
@@ -126,25 +142,25 @@ func ApplyPlugin(pifce PluginInterface) error {
 func loadPluginDependencies(p *plugin.Plugin) ([]string, error) {
 	sym, err := p.Lookup("Dependencies")
 	if err != nil {
-		return nil, EInvalidPlugin{err}
+		return nil, ErrInvalidPlugin{err}
 	}
 	ret, ok := sym.(*[]string)
 	if ok {
 		return *ret, nil
 	}
-	return nil, EIncompatiablePlugin
+	return nil, ErrIncompatiablePlugin
 }
 
 func loadPluginMain(p *plugin.Plugin, arr ...string) (func(PluginInterface) error, error) {
 	for _, mainName := range arr {
 		sym, err := p.Lookup(mainName)
 		if err != nil {
-			return nil, EInvalidPlugin{err}
+			return nil, ErrInvalidPlugin{err}
 		}
 		fn, ok := sym.(func(PluginInterface) error)
 		if ok {
 			return fn, nil
 		}
 	}
-	return nil, EIncompatiablePlugin
+	return nil, ErrIncompatiablePlugin
 }

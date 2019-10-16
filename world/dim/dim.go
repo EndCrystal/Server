@@ -7,8 +7,9 @@ import (
 	"github.com/EndCrystal/Server/world/chunk"
 )
 
+// Dimension dimension struct
 type Dimension struct {
-	*sync.Mutex
+	sync.Mutex
 	actor.Systems
 	chunk.Map
 	tags []string
@@ -16,15 +17,18 @@ type Dimension struct {
 
 var dims = make(map[string]*Dimension)
 
-func (d Dimension) Tags() []string {
+// Tags get dimension tags
+func (d *Dimension) Tags() []string {
 	return d.tags
 }
 
+// LookupDimension lookup dimension by name
 func LookupDimension(name string) (*Dimension, bool) {
 	d, ok := dims[name]
 	return d, ok
 }
 
+// ForEachDimension for each dimension
 func ForEachDimension(fn func(name string, d *Dimension) error) error {
 	for name, d := range dims {
 		err := fn(name, d)

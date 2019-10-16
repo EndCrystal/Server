@@ -4,42 +4,57 @@ import (
 	packed "github.com/EndCrystal/PackedIO"
 )
 
+// SendOnlyPacket server-side packet
 type SendOnlyPacket interface {
-	PacketId() PacketId
+	PacketID() PID
 	Save(packed.Output)
 }
 
+// ReceiveOnlyPacket client-side packet
 type ReceiveOnlyPacket interface {
-	PacketId() PacketId
+	PacketID() PID
 	Load(packed.Input)
 	Check(ctx *ParseContext) bool
 }
 
+// Packet packet interface
 type Packet interface {
 	packed.Serializable
-	PacketId() PacketId
+	PacketID() PID
 	Check(ctx *ParseContext) bool
 }
 
+// NetworkVersion version code
 const NetworkVersion uint32 = 0x01
 
-type PacketId uint8
+// PID unique id for packet
+type PID uint8
 
 const (
-	IdBatch PacketId = iota
-	IdLogin
-	IdDisconnect
-	IdGameStart
-	IdChat
-	IdText
-	IdChunkRequest
-	IdChunkData
+	// IDBatch batch
+	IDBatch PID = iota
+	// IDLogin login
+	IDLogin
+	// IDDisconnect disconnect
+	IDDisconnect
+	// IDGameStart game start
+	IDGameStart
+	// IDChat chat message
+	IDChat
+	// IDText general text packet
+	IDText
+	// IDChunkRequest chunk request
+	IDChunkRequest
+	// IDChunkData chunk data
+	IDChunkData
 )
 
+// ParseContext context for parsing
 type ParseContext struct {
 	Quota uint16
 }
 
+// Check check context for parsing
 func (ctx *ParseContext) Check(eat uint16) bool {
 	if eat > ctx.Quota {
 		return false

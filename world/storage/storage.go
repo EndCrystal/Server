@@ -10,8 +10,10 @@ import (
 	"go.etcd.io/bbolt"
 )
 
+// Storage struct
 type Storage struct{ db *bbolt.DB }
 
+// Open open storage
 func Open(path string) (ret *Storage, err error) {
 	db, err := bbolt.Open(path, 0600, &bbolt.Options{Timeout: 1 * time.Second})
 	if err == nil {
@@ -20,32 +22,35 @@ func Open(path string) (ret *Storage, err error) {
 	return
 }
 
+// Close close storage
 func (s Storage) Close() {
 	s.db.Close()
 }
 
-func (s *Storage) ForConfig(path ...string) StorageForConfig {
+// ForConfig create config lens
+func (s *Storage) ForConfig(path ...string) SForConfig {
 	if len(path) == 0 {
 		panic("path is required")
 	}
-	return StorageForConfig{s, path}
+	return SForConfig{s, path}
 }
 
-type StorageForConfig struct {
+// SForConfig custom lens for config
+type SForConfig struct {
 	*Storage
 	path []string
 }
 
-func (s StorageForConfig) Get(key string) (ret []byte) {
+// Get get key
+func (s SForConfig) Get(key string) (ret []byte) {
 	s.db.View(func(tx *bbolt.Tx) error {
 		var ifc interface{ Bucket([]byte) *bbolt.Bucket } = tx
 		for _, item := range s.path {
 			bkt := ifc.Bucket([]byte(item))
 			if bkt == nil {
 				return nil
-			} else {
-				ifc = bkt
 			}
+			ifc = bkt
 		}
 		bkt := ifc.(*bbolt.Bucket)
 		tmp := bkt.Get([]byte(key))
@@ -56,7 +61,8 @@ func (s StorageForConfig) Get(key string) (ret []byte) {
 	return
 }
 
-func (s StorageForConfig) Set(key string, value []byte) error {
+// Set set key
+func (s SForConfig) Set(key string, value []byte) error {
 	return s.db.Batch(func(tx *bbolt.Tx) error {
 		var ifc interface {
 			CreateBucketIfNotExists([]byte) (*bbolt.Bucket, error)
@@ -73,11 +79,13 @@ func (s StorageForConfig) Set(key string, value []byte) error {
 	})
 }
 
-func (s *Storage) ForDim(name string) StorageForDim {
-	return StorageForDim{s, name}
+// ForDim get dimension storage
+func (s *Storage) ForDim(name string) SForDim {
+	return SForDim{s, name}
 }
 
-type StorageForDim struct {
+// SForDim dimension storage
+type SForDim struct {
 	*Storage
 	dim string
 }
@@ -88,12 +96,13 @@ func dump(obj packed.Serializable) []byte {
 	return buf.Bytes()
 }
 
-func (s StorageForDim) LoadChunk(pos chunk.ChunkPos) (chk *chunk.Chunk, err error) {
+// LoadChunk load chunk
+func (s SForDim) LoadChunk(pos chunk.CPos) (chk *chunk.Chunk, err error) {
 	dimchk := []byte(fmt.Sprintf("dim-%s-chunks", s.dim))
 	err = s.db.View(func(tx *bbolt.Tx) error {
 		bkt := tx.Bucket(dimchk)
 		if bkt == nil {
-			return chunk.EChunkNotFound
+			return chunk.ErrChunkNotFound
 		}
 		data := bkt.Get(dump(&pos))
 		var chkdata chunk.Chunk
@@ -104,7 +113,8 @@ func (s StorageForDim) LoadChunk(pos chunk.ChunkPos) (chk *chunk.Chunk, err erro
 	return
 }
 
-func (s StorageForDim) SaveChunk(pos chunk.ChunkPos, data *chunk.Chunk) error {
+// SaveChunk save chunk
+func (s SForDim) SaveChunk(pos chunk.CPos, data *chunk.Chunk) error {
 	dimchk := []byte(fmt.Sprintf("dim-%s-chunks", s.dim))
 	posd := dump(&pos)
 	datad := dump(data)

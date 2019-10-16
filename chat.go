@@ -8,9 +8,9 @@ import (
 	"github.com/EndCrystal/Server/packet"
 )
 
-func handleChat(broadcaster network.PacketBroadcaster) chan<- ChatMessage {
+func handleChat(broadcaster network.PacketBroadcaster) chan<- chatMessage {
 	log := logprefix.Get("[chat system] ")
-	ret := make(chan ChatMessage)
+	ret := make(chan chatMessage)
 	go func() {
 		for msg := range ret {
 			message := strings.Trim(msg.Message, " ")

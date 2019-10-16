@@ -21,18 +21,18 @@ import (
 	go_up "github.com/ufoscout/go-up"
 )
 
-type ChatMessage struct {
+type chatMessage struct {
 	Sender  string
 	Message string
 }
 
-type Global struct {
-	verfier token.TokenVerifier
-	chat    chan<- ChatMessage
+type serverGlobal struct {
+	verfier token.Verifier
+	chat    chan<- chatMessage
 	users   *sync.Map
 }
 
-var global Global
+var global serverGlobal
 
 var log = logprefix.Get("[main] ")
 
@@ -41,10 +41,10 @@ func main() {
 	loadConfig()
 	err = loadMainStorage()
 	if err != nil {
-		log.Fatalf("Failed to load main storage: %s", config.storage_path)
+		log.Fatalf("Failed to load main storage: %s", config.storagePath)
 	}
 	defer storage.MainStorage.Close()
-	err = loadPluginFromMulti(config.plugin_home...)
+	err = loadPluginFromMulti(config.pluginHome...)
 	if err != nil {
 		pluginStats()
 		log.Fatalf("Failed to load plugins: %v", err)
@@ -65,12 +65,12 @@ func main() {
 	global.chat = handleChat(global)
 
 	var server network.Server
-	var endpoint_url *url.URL
-	endpoint_url, err = url.Parse(config.endpoint)
+	var endpointURL *url.URL
+	endpointURL, err = url.Parse(config.endpoint)
 	if err != nil {
 		log.Fatalf("Failed to parse endpoint url: %v", err)
 	}
-	server, err = network.CreateServer(endpoint_url)
+	server, err = network.CreateServer(endpointURL)
 	if err != nil {
 		log.Fatalf("Failed to create server for this endpoint (%s): %v", config.endpoint, err)
 	}
@@ -102,14 +102,14 @@ func loadConfig() {
 		Build()
 	checkerr()
 	config.endpoint = up.GetStringOrDefault("endpoint", "ws://0.0.0.0:2480")
-	config.pubkey_path = up.GetStringOrDefault("pubkey.path", "key.pub")
-	config.plugin_home = up.GetStringSliceOrDefault("plugin", ":", []string{"plugins", filepath.Join(os.Getenv("HOME"), ".local", "share", "EndCrystal", "plugins")})
+	config.pubkeyPath = up.GetStringOrDefault("pubkey.path", "key.pub")
+	config.pluginHome = up.GetStringSliceOrDefault("plugin", ":", []string{"plugins", filepath.Join(os.Getenv("HOME"), ".local", "share", "EndCrystal", "plugins")})
 	config.id = up.GetStringOrDefault("id", "default")
-	config.connection_timeout = time.Duration(up.GetIntOrDefault("connection.timeout", 10)) * time.Second
-	config.storage_path = up.GetStringOrDefault("storage", "EndCrystal.bbolt")
+	config.connectionTimeout = time.Duration(up.GetIntOrDefault("connection.timeout", 10)) * time.Second
+	config.storagePath = up.GetStringOrDefault("storage", "EndCrystal.bbolt")
 	config.spawnpoint.dimension, err = up.GetStringOrFail("spawnpoint.dimension")
 	checkerr()
-	config.view_distance = uint32(up.GetIntOrDefault("view-distance", 8))
+	config.viewDistance = uint32(up.GetIntOrDefault("view-distance", 8))
 
 	{
 		var pos string
@@ -119,35 +119,35 @@ func loadConfig() {
 }
 
 var config struct {
-	endpoint           string
-	plugin_home        []string
-	pubkey_path        string
-	id                 string
-	connection_timeout time.Duration
-	storage_path       string
-	view_distance      uint32
-	spawnpoint         struct {
+	endpoint          string
+	pluginHome        []string
+	pubkeyPath        string
+	id                string
+	connectionTimeout time.Duration
+	storagePath       string
+	viewDistance      uint32
+	spawnpoint        struct {
 		dimension string
-		pos       chunk.ChunkPos
+		pos       chunk.CPos
 	}
 }
 
 func loadMainStorage() (err error) {
-	storage.MainStorage, err = storage.Open(config.storage_path)
+	storage.MainStorage, err = storage.Open(config.storagePath)
 	return
 }
 
-func loadPubKey() (verifier token.TokenVerifier, err error) {
+func loadPubKey() (verifier token.Verifier, err error) {
 	log := logprefix.Get("[pubkey loader] ")
-	log.Printf("Loading from %s", config.pubkey_path)
-	stat, err := os.Stat(config.pubkey_path)
+	log.Printf("Loading from %s", config.pubkeyPath)
+	stat, err := os.Stat(config.pubkeyPath)
 	if err != nil {
 		return
 	}
 	if stat.Size() != int64(token.PubKeyLen) {
 		return nil, fmt.Errorf("Failed to load pubkey: size mismatch")
 	}
-	data, err := ioutil.ReadFile(config.pubkey_path)
+	data, err := ioutil.ReadFile(config.pubkeyPath)
 	if err != nil {
 		return
 	}
@@ -188,7 +188,7 @@ func loadPluginFrom(root string) (err error) {
 			}
 		}
 	}()
-	var plugin_count int
+	var pluginCount int
 	err = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -205,7 +205,7 @@ func loadPluginFrom(root string) (err error) {
 		if err != nil {
 			return err
 		}
-		plugin_count++
+		pluginCount++
 		return nil
 	})
 	if err != nil {
@@ -216,6 +216,6 @@ func loadPluginFrom(root string) (err error) {
 		}
 		return
 	}
-	log.Printf("Queued %d plugins from %s", plugin_count, root)
+	log.Printf("Queued %d plugins from %s", pluginCount, root)
 	return
 }

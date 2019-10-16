@@ -4,9 +4,10 @@ import (
 	"github.com/EndCrystal/Server/packet"
 )
 
-func (g Global) BroadcastPacket(pkt packet.SendOnlyPacket) {
+// BroadcastPacket Broadcast packet globally
+func (g serverGlobal) BroadcastPacket(pkt packet.SendOnlyPacket) {
 	g.users.Range(func(key interface{}, value interface{}) bool {
-		value.(UserInfoWithClient).SendPacket(pkt)
+		value.(userInfoWithClient).SendPacket(pkt)
 		return true
 	})
 }

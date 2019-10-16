@@ -8,7 +8,7 @@ import (
 	"github.com/EndCrystal/Server/token"
 )
 
-var verifier token.TokenVerifier
+var verifier token.Verifier
 
 func TestVerify(t *testing.T) {
 	pub, priv := token.GenerateKeys()

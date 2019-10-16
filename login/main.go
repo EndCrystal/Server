@@ -16,15 +16,15 @@ import (
 	"github.com/rs/cors"
 )
 
-func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	fmt.Fprintf(w, "Simple Agent")
 }
 
-var generator token.TokenGenerator
+var generator token.Generator
 
 func genpacket(server, username string) (pkt packet.LoginPacket) {
 	var payload packet.LoginPayload
-	payload.ServerId = server
+	payload.ServerID = server
 	payload.Username = username
 	payload.Time = time.Now()
 	pkt.Write(payload, generator)
@@ -73,7 +73,7 @@ func main() {
 	loadGenerator()
 
 	router := httprouter.New()
-	router.GET("/", Index)
+	router.GET("/", index)
 	router.GET("/login/:server/:username", auth)
 
 	handler := cors.Default().Handler(router)

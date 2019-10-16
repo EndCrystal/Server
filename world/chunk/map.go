@@ -5,14 +5,16 @@ import (
 	"time"
 )
 
+// Map map data
 type Map struct {
 	mtx       sync.Mutex
 	inited    bool
 	storage   Storage
 	generator Generator
-	loaded    map[ChunkPos]*ChunkRef
+	loaded    map[CPos]*Ref
 }
 
+// Init init map data
 func (m *Map) Init(storage Storage, generator Generator) {
 	if m.inited {
 		return
@@ -20,10 +22,11 @@ func (m *Map) Init(storage Storage, generator Generator) {
 	m.inited = true
 	m.storage = storage
 	m.generator = generator
-	m.loaded = make(map[ChunkPos]*ChunkRef)
+	m.loaded = make(map[CPos]*Ref)
 }
 
-func (m *Map) GetChunk(pos ChunkPos) (ret *ChunkRef, err error) {
+// GetChunk get chunk from pos
+func (m *Map) GetChunk(pos CPos) (ret *Ref, err error) {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 	// lookup cache
@@ -35,7 +38,7 @@ func (m *Map) GetChunk(pos ChunkPos) (ret *ChunkRef, err error) {
 	var chk *Chunk
 	defer func() {
 		if err == nil {
-			ret = &ChunkRef{
+			ret = &Ref{
 				mtx:        new(sync.Mutex),
 				Chunk:      chk,
 				lastAccess: time.Now(),
@@ -44,7 +47,7 @@ func (m *Map) GetChunk(pos ChunkPos) (ret *ChunkRef, err error) {
 		}
 	}()
 	chk, err = m.storage.LoadChunk(pos)
-	if err == nil || err != EChunkNotFound {
+	if err == nil || err != ErrChunkNotFound {
 		return
 	}
 	// try to generate on the fly

@@ -9,8 +9,9 @@ import (
 	"github.com/EndCrystal/Server/world/chunk"
 )
 
+// ChunkDataPacket chunk data packet
 type ChunkDataPacket struct {
-	Pos   chunk.ChunkPos
+	Pos   chunk.CPos
 	cache []byte
 }
 
@@ -20,6 +21,7 @@ var chunkdataPool = sync.Pool{
 	},
 }
 
+// SetData set chunk data
 func (pkt *ChunkDataPacket) SetData(data *chunk.Chunk) func() {
 	buf := chunkdataPool.Get().(*bytes.Buffer)
 	buf.Reset()
@@ -31,9 +33,11 @@ func (pkt *ChunkDataPacket) SetData(data *chunk.Chunk) func() {
 	return func() { chunkdataPool.Put(buf) }
 }
 
+// Save save to data
 func (pkt ChunkDataPacket) Save(out packed.Output) {
 	pkt.Pos.Save(out)
 	out.WriteBytes(pkt.cache)
 }
 
-func (ChunkDataPacket) PacketId() PacketId { return IdChunkData }
+// PacketID ID
+func (ChunkDataPacket) PacketID() PID { return IDChunkData }

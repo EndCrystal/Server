@@ -1,27 +1,34 @@
 package block
 
+// PluginBlockHost plugin host
 type PluginBlockHost struct{}
 
-func (PluginBlockHost) RegisterBlock(b Block) Id {
+// RegisterBlock register block
+func (PluginBlockHost) RegisterBlock(b Block) BID {
 	return Register(b)
 }
 
-func (PluginBlockHost) GetBlock(id Id) *Block {
+// GetBlock get block by id
+func (PluginBlockHost) GetBlock(id BID) *Block {
 	return Get(id)
 }
 
-func (PluginBlockHost) LookupBlockId(name string) (Id, bool) {
-	return LookupId(name)
+// LookupBlockID lookup block id by name
+func (PluginBlockHost) LookupBlockID(name string) (BID, bool) {
+	return LookupID(name)
 }
 
+// LookupBlock lookup block by name
 func (PluginBlockHost) LookupBlock(name string) *Block {
 	return Lookup(name)
 }
 
-func (PluginBlockHost) GetBlockExtraLoader(id Id) ExtraLoader {
+// GetBlockExtraLoader get block extra data loader
+func (PluginBlockHost) GetBlockExtraLoader(id BID) ExtraLoader {
 	return GetExtraLoader(id)
 }
 
-func (PluginBlockHost) RegisterBlockExtraLoader(id Id, loader ExtraLoader) {
+// RegisterBlockExtraLoader register block extra loader
+func (PluginBlockHost) RegisterBlockExtraLoader(id BID, loader ExtraLoader) {
 	RegisterExtraLoader(id, loader)
 }
