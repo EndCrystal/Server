@@ -11,6 +11,7 @@ type controlSystemElem struct {
 	actor.Actor
 	components.ControllableComponent
 }
+
 // ControlSystem control system
 type ControlSystem map[types.ID]controlSystemElem
 

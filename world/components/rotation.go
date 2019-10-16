@@ -4,7 +4,7 @@ import packed "github.com/EndCrystal/PackedIO"
 
 type (
 	// Rotation component
-	Rotation          struct{ RotationAngle float32 }
+	Rotation struct{ RotationAngle float32 }
 	// RotationComponent component interface
 	RotationComponent interface {
 		GetRotation() *Rotation
@@ -14,9 +14,11 @@ type (
 )
 
 // GetRotation get component
-func (rot *Rotation) GetRotation() *Rotation        { return rot }
+func (rot *Rotation) GetRotation() *Rotation { return rot }
+
 // LoadRotation load component
-func (rot *Rotation) LoadRotation(in packed.Input)  { rot.RotationAngle = in.ReadFloat32() }
+func (rot *Rotation) LoadRotation(in packed.Input) { rot.RotationAngle = in.ReadFloat32() }
+
 // SaveRotation save component
 func (rot Rotation) SaveRotation(out packed.Output) { out.WriteFloat32(rot.RotationAngle) }
 

@@ -8,6 +8,7 @@ import (
 
 // PluginID plugin identifier
 var PluginID string = "core:dim:flatdim"
+
 // Dependencies dependencies
 var Dependencies = []string{}
 
@@ -22,9 +23,11 @@ func PluginMain(i plug.PluginInterface) error {
 type SimpleFlatWorldGenerator struct{ ifce plug.PluginInterface }
 
 // Load load from data
-func (SimpleFlatWorldGenerator) Load(packed.Input)  {}
+func (SimpleFlatWorldGenerator) Load(packed.Input) {}
+
 // Save save to data
 func (SimpleFlatWorldGenerator) Save(packed.Output) {}
+
 // Generate generate chunk
 func (g SimpleFlatWorldGenerator) Generate(pos chunk.CPos) *chunk.Chunk {
 	ret := new(chunk.Chunk)

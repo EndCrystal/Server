@@ -29,13 +29,16 @@ const (
 )
 
 // HasAux check if block has aux
-func (b Block) HasAux() bool   { return b.Attributes&AttributeHasAux != 0 }
+func (b Block) HasAux() bool { return b.Attributes&AttributeHasAux != 0 }
+
 // HasColor check if block has color
 func (b Block) HasColor() bool { return b.Attributes&AttributeHasColor != 0 }
+
 // IsSolid check if block is solid
-func (b Block) IsSolid() bool  { return b.Attributes&AttributeSolid != 0 }
+func (b Block) IsSolid() bool { return b.Attributes&AttributeSolid != 0 }
+
 // IsFluid check if block is fluid
-func (b Block) IsFluid() bool  { return b.Attributes&AttributeFluid != 0 }
+func (b Block) IsFluid() bool { return b.Attributes&AttributeFluid != 0 }
 
 // Instance block instance
 type Instance struct {
@@ -68,14 +71,15 @@ func (i *Instance) Normalize() {
 
 // ExtraLoader loader for extra info
 type ExtraLoader func(in packed.Input) packed.Serializable
+
 // BID block id
 type BID uint16
 
 var (
 	registry [^BID(0)]Block
-	loaders     = make(map[BID]ExtraLoader)
+	loaders      = make(map[BID]ExtraLoader)
 	maxID    BID = 0
-	index       = make(map[string]BID)
+	index        = make(map[string]BID)
 )
 
 // ErrConflict Conflicted block

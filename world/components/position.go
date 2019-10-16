@@ -10,12 +10,14 @@ type Position struct {
 
 // GetPosition get component
 func (p *Position) GetPosition() *Position { return p }
+
 // LoadPosition load position
 func (p *Position) LoadPosition(in packed.Input) {
 	p.X = in.ReadFloat64()
 	p.Y = in.ReadFloat32()
 	p.Z = in.ReadFloat64()
 }
+
 // SavePosition save position
 func (p *Position) SavePosition(out packed.Output) {
 	out.WriteFloat64(p.X)

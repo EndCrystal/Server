@@ -4,18 +4,18 @@ import "crypto/ed25519"
 
 const (
 	// TokenLen length for token
-	TokenLen   = ed25519.SignatureSize
+	TokenLen = ed25519.SignatureSize
 	// PubKeyLen length of public key
-	PubKeyLen  = ed25519.PublicKeySize
+	PubKeyLen = ed25519.PublicKeySize
 	// PrivKeyLen length of private key
 	PrivKeyLen = ed25519.PrivateKeySize
 )
 
 type (
 	// Token token type
-	Token   [ed25519.SignatureSize]byte
+	Token [ed25519.SignatureSize]byte
 	// PubKey public key
-	PubKey  [ed25519.PublicKeySize]byte
+	PubKey [ed25519.PublicKeySize]byte
 	// PrivKey private key
 	PrivKey [ed25519.PrivateKeySize]byte
 )
@@ -25,7 +25,7 @@ type (
 	Generator func(data []byte, tok *Token)
 
 	// Verifier verify token
-	Verifier  func(data []byte, tok Token) bool
+	Verifier func(data []byte, tok Token) bool
 )
 
 // GetTokenGenerator create generator

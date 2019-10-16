@@ -7,6 +7,7 @@ type PluginCommonHost struct{}
 
 // UserLabelHandler user label handler
 type UserLabelHandler func(username string, id network.Identifier) string
+
 // ServerMotdHandler server motd handler
 type ServerMotdHandler func(username string, id network.Identifier) string
 

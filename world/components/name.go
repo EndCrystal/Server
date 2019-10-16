@@ -8,7 +8,8 @@ type Nameable struct {
 }
 
 // GetName get name
-func (n Nameable) GetName() string      { return n.Name }
+func (n Nameable) GetName() string { return n.Name }
+
 // SetName set name
 func (n *Nameable) SetName(name string) { n.Name = name }
 

@@ -32,7 +32,8 @@ var (
 )
 
 // ID retrive id
-func (id Identifier) ID() types.ID                       { return id.id }
+func (id Identifier) ID() types.ID { return id.id }
+
 // RuntimeComponentMap get runtime component map
 func (b Basic) RuntimeComponentMap() RuntimeComponentMap { return b.runtime }
 
