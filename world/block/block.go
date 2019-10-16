@@ -6,42 +6,60 @@ import (
 	packed "github.com/EndCrystal/PackedIO"
 )
 
+// Block block struct
 type Block struct {
 	Name       string
 	Attributes Attribute
 }
 
+// Attribute attribute
 type Attribute uint8
 
 const (
-	AttributeNone   Attribute = 0
-	AttributeHasAux           = 1 << iota
+	// AttributeNone none
+	AttributeNone Attribute = 0
+	// AttributeHasAux has aux
+	AttributeHasAux = 1 << iota
+	// AttributeHasColor has color
 	AttributeHasColor
+	// AttributeSolid solid
 	AttributeSolid
+	// AttributeFluid fluid
 	AttributeFluid
 )
 
-func (b Block) HasAux() bool   { return b.Attributes&AttributeHasAux != 0 }
-func (b Block) HasColor() bool { return b.Attributes&AttributeHasColor != 0 }
-func (b Block) IsSolid() bool  { return b.Attributes&AttributeSolid != 0 }
-func (b Block) IsFluid() bool  { return b.Attributes&AttributeFluid != 0 }
+// HasAux check if block has aux
+func (b Block) HasAux() bool { return b.Attributes&AttributeHasAux != 0 }
 
+// HasColor check if block has color
+func (b Block) HasColor() bool { return b.Attributes&AttributeHasColor != 0 }
+
+// IsSolid check if block is solid
+func (b Block) IsSolid() bool { return b.Attributes&AttributeSolid != 0 }
+
+// IsFluid check if block is fluid
+func (b Block) IsFluid() bool { return b.Attributes&AttributeFluid != 0 }
+
+// Instance block instance
 type Instance struct {
-	Id    Id
+	ID    BID
 	Aux   uint32
 	Color uint32
 }
 
+// GetBlock get block from instance
 func (i *Instance) GetBlock() *Block {
-	return Get(i.Id)
+	return Get(i.ID)
 }
 
-var EInvalidInstance = errors.New("Invalid block instance")
+// ErrInvalidInstance Invalid block instance
+var ErrInvalidInstance = errors.New("Invalid block instance")
 
+// Normalize fix aux data
 func (i *Instance) Normalize() {
-	blk := Get(i.Id)
+	blk := Get(i.ID)
 	if blk == nil {
-		panic(EInvalidInstance)
+		panic(ErrInvalidInstance)
 	}
 	if !blk.HasAux() {
 		i.Aux = 0
@@ -51,40 +69,48 @@ func (i *Instance) Normalize() {
 	}
 }
 
+// ExtraLoader loader for extra info
 type ExtraLoader func(in packed.Input) packed.Serializable
-type Id uint16
+
+// BID block id
+type BID uint16
 
 var (
-	registry [^Id(0)]Block
-	loaders     = make(map[Id]ExtraLoader)
-	maxId    Id = 0
-	index       = make(map[string]Id)
+	registry [^BID(0)]Block
+	loaders      = make(map[BID]ExtraLoader)
+	maxID    BID = 0
+	index        = make(map[string]BID)
 )
 
-var EConflict = errors.New("Conflicted block")
+// ErrConflict Conflicted block
+var ErrConflict = errors.New("Conflicted block")
 
-func Register(b Block) Id {
+// Register register block
+func Register(b Block) BID {
 	if _, ok := index[b.Name]; ok {
-		panic(EConflict)
+		panic(ErrConflict)
 	}
-	defer func() { maxId++ }()
-	registry[maxId] = b
-	index[b.Name] = maxId
-	return maxId
+	defer func() { maxID++ }()
+	registry[maxID] = b
+	index[b.Name] = maxID
+	return maxID
 }
 
-func Get(id Id) *Block {
-	if id < maxId {
+// Get get block by id
+func Get(id BID) *Block {
+	if id < maxID {
 		return &registry[id]
 	}
 	return nil
 }
 
-func LookupId(name string) (Id, bool) {
+// LookupID lookup block id by name
+func LookupID(name string) (BID, bool) {
 	ret, ok := index[name]
 	return ret, ok
 }
 
+// Lookup lookup block by name
 func Lookup(name string) *Block {
 	if ret, ok := index[name]; ok {
 		return &registry[ret]
@@ -92,7 +118,8 @@ func Lookup(name string) *Block {
 	return nil
 }
 
-func GetExtraLoader(id Id) ExtraLoader {
+// GetExtraLoader get extra loader by id
+func GetExtraLoader(id BID) ExtraLoader {
 	loader, ok := loaders[id]
 	if !ok {
 		return nil
@@ -100,13 +127,15 @@ func GetExtraLoader(id Id) ExtraLoader {
 	return loader
 }
 
-func RegisterExtraLoader(id Id, loader ExtraLoader) {
+// RegisterExtraLoader register extra data loader
+func RegisterExtraLoader(id BID, loader ExtraLoader) {
 	loaders[id] = loader
 }
 
+// DescribeBlocks serialize block
 func DescribeBlocks(o packed.Output) {
-	o.WriteVarUint32(uint32(maxId))
-	for i := Id(0); i < maxId; i++ {
+	o.WriteVarUint32(uint32(maxID))
+	for i := BID(0); i < maxID; i++ {
 		o.WriteString(registry[i].Name)
 		o.WriteUint8(uint8(registry[i].Attributes))
 	}

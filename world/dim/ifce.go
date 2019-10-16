@@ -12,13 +12,14 @@ var (
 	pendingActorSystemAdder []func(tags []string) actor.System
 )
 
+// PluginDimensionHost plugin host
 type PluginDimensionHost struct{}
 
+// AddDimension add dimension
 func (PluginDimensionHost) AddDimension(name string, tags []string, storage chunk.Storage, generator chunk.Generator) {
 	mtx.Lock()
 	defer mtx.Unlock()
 	d := Dimension{
-		Mutex:   new(sync.Mutex),
 		Systems: actor.MakeSystems(),
 		tags:    tags,
 	}
@@ -33,6 +34,7 @@ func (PluginDimensionHost) AddDimension(name string, tags []string, storage chun
 	return
 }
 
+// AddActorSystem add actor system
 func (PluginDimensionHost) AddActorSystem(adder func(tags []string) actor.System) {
 	mtx.Lock()
 	defer mtx.Unlock()
@@ -45,6 +47,7 @@ func (PluginDimensionHost) AddActorSystem(adder func(tags []string) actor.System
 	pendingActorSystemAdder = append(pendingActorSystemAdder, adder)
 }
 
+// AddPreloadActorSystem add preload actor system
 func AddPreloadActorSystem(adder func() actor.System) {
 	pendingActorSystemAdder = append(pendingActorSystemAdder, func([]string) actor.System { return adder() })
 }

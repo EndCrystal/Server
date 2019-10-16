@@ -7,30 +7,35 @@ import (
 	packed "github.com/EndCrystal/PackedIO"
 )
 
-var EUnknownPacket = errors.New("Unknown Packet ID")
-var EDisallowedPacket = errors.New("Disallowed Packet")
+// ErrUnknownPacket Unknown Packet ID
+var ErrUnknownPacket = errors.New("Unknown Packet ID")
 
+// ErrDisallowedPacket Disallowed Packet
+var ErrDisallowedPacket = errors.New("Disallowed Packet")
+
+// Parse parse packet from data
 func Parse(in packed.Input, ctx *ParseContext) (pkt ReceiveOnlyPacket) {
-	id := PacketId(in.ReadUint8())
+	id := PID(in.ReadUint8())
 	switch id {
-	case IdBatch:
+	case IDBatch:
 		pkt = &BatchPacket{ctx, nil, nil}
-	case IdLogin:
+	case IDLogin:
 		pkt = new(LoginPacket)
-	case IdChat:
+	case IDChat:
 		pkt = new(ChatPacket)
-	case IdChunkRequest:
+	case IDChunkRequest:
 		pkt = new(ChunkRequestPacket)
 	default:
-		panic(EUnknownPacket)
+		panic(ErrUnknownPacket)
 	}
 	pkt.Load(in)
 	if !pkt.Check(ctx) {
-		panic(EDisallowedPacket)
+		panic(ErrDisallowedPacket)
 	}
 	return
 }
 
+// ParsePacket safe parse
 func ParsePacket(in packed.Input, quota uint16) (pkt ReceiveOnlyPacket, err error) {
 	defer func() {
 		if e := recover(); e != nil {

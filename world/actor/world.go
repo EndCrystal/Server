@@ -1,7 +1,8 @@
 package actor
 
-import . "github.com/EndCrystal/Server/types"
+import "github.com/EndCrystal/Server/types"
 
+// Systems systems
 type Systems struct {
 	main          map[string]System
 	list          []System
@@ -11,11 +12,13 @@ type Systems struct {
 	simpleAddable []SystemSimpleAdd
 }
 
+// MakeSystems make systems
 func MakeSystems() (ret Systems) {
 	ret.main = make(map[string]System)
 	return
 }
 
+// GetByName get system by name
 func (s Systems) GetByName(name string) System {
 	if ret, ok := s.main[name]; ok {
 		return ret
@@ -23,6 +26,7 @@ func (s Systems) GetByName(name string) System {
 	return nil
 }
 
+// AddActorSystem add actor system
 func (s Systems) AddActorSystem(sys System) {
 	s.main[sys.Name()] = sys
 	s.list = append(s.list, sys)
@@ -40,6 +44,7 @@ func (s Systems) AddActorSystem(sys System) {
 	}
 }
 
+// Update invoke update
 func (s Systems) Update() {
 	for _, sys := range s.preUpdateable {
 		sys.PreUpdate()
@@ -55,13 +60,15 @@ func (s Systems) Update() {
 	}
 }
 
+// AddActor add actor to systems
 func (s Systems) AddActor(actor Actor) {
 	for _, sys := range s.simpleAddable {
 		sys.Add(actor)
 	}
 }
 
-func (s Systems) RemoveActor(id Id) {
+// RemoveActor remove actor
+func (s Systems) RemoveActor(id types.ID) {
 	if id == Invalid {
 		return
 	}
@@ -70,6 +77,7 @@ func (s Systems) RemoveActor(id Id) {
 	}
 }
 
+// Recheck recheck actor
 func (s Systems) Recheck(actor Actor) {
 	for _, sys := range s.recheckable {
 		sys.Recheck(actor)

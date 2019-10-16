@@ -5,20 +5,24 @@ import (
 	"time"
 )
 
-type ChunkRef struct {
+// Ref reference for chunk
+type Ref struct {
 	mtx *sync.Mutex
 	*Chunk
 	lastAccess time.Time
 }
 
-// Used for tick_area
-func (ref *ChunkRef) Update() {
+// Update Used for tick_area
+func (ref *Ref) Update() {
 	ref.lastAccess = time.Now()
 }
 
-func (ref *ChunkRef) Access() func() {
+// Access make access
+func (ref *Ref) Access() func() {
 	ref.mtx.Lock()
 	ref.Update()
 	return ref.mtx.Unlock
 }
-func (ref ChunkRef) Since() time.Duration { return time.Since(ref.lastAccess) }
+
+// Since calculate duration between now to last access
+func (ref Ref) Since() time.Duration { return time.Since(ref.lastAccess) }

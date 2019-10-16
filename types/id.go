@@ -1,3 +1,3 @@
 package types
 
-type Id uint32
+type ID uint32

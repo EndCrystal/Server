@@ -9,6 +9,7 @@ import (
 	"github.com/EndCrystal/Server/world/storage"
 )
 
+// PluginInterface basic plugin interface
 type PluginInterface struct {
 	common.PluginCommonHost
 	network.PluginNetworkHost

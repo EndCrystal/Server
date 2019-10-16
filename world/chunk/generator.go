@@ -2,7 +2,8 @@ package chunk
 
 import packed "github.com/EndCrystal/PackedIO"
 
+// Generator chunk generator
 type Generator interface {
 	packed.Serializable
-	Generate(pos ChunkPos) *Chunk
+	Generate(pos CPos) *Chunk
 }

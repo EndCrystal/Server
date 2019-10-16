@@ -5,30 +5,34 @@ import (
 
 	packed "github.com/EndCrystal/PackedIO"
 	"github.com/EndCrystal/Server/logprefix"
-	. "github.com/EndCrystal/Server/types"
+	"github.com/EndCrystal/Server/types"
 	"github.com/EndCrystal/Server/world/actor"
 )
 
+// Component base
 type Component struct {
-	Id   Id
+	id   types.ID
 	Type reflect.Type
 	Name string
 	Info ComponentInfo
 }
 
+// ComponentInfo info for component
 type ComponentInfo interface {
 	LoadComponent(packed.Input, interface{})
 	SaveComponent(packed.Output, interface{})
 	Secure() bool
 }
 
+// RuntimeComponent runtime component
 type RuntimeComponent struct {
-	Id   Id
+	id   types.ID
 	Type reflect.Type
 	Name string
 	Info RuntimeComponentInfo
 }
 
+// RuntimeComponentInfo runtime component info
 type RuntimeComponentInfo interface {
 	CreateComponent(packed.Input) interface{}
 	SaveComponent(packed.Output, interface{})
@@ -36,22 +40,22 @@ type RuntimeComponentInfo interface {
 }
 
 var (
-	registry         = make([]*Component, 0)
-	runtime_registry = make([]*RuntimeComponent, 0)
-	index            = make(map[string]Id)
-	runtime_index    = make(map[string]Id)
+	registry        = make([]*Component, 0)
+	runtimeRegistry = make([]*RuntimeComponent, 0)
+	index           = make(map[string]types.ID)
+	runtimeIndex    = make(map[string]types.ID)
 )
 
 // Register static component type
 // (if info == nil they won't be saved or sent)
-func Register(name string, pointer interface{}, info ComponentInfo) (id Id) {
+func Register(name string, pointer interface{}, info ComponentInfo) (id types.ID) {
 	t := reflect.TypeOf(pointer).Elem()
 	if t.Kind() != reflect.Interface {
 		panic("Invalid component: not an interface")
 	}
-	id = Id(len(registry))
+	id = types.ID(len(registry))
 	registry = append(registry, &Component{
-		Id:   id,
+		id:   id,
 		Type: t,
 		Name: name,
 		Info: info,
@@ -60,11 +64,12 @@ func Register(name string, pointer interface{}, info ComponentInfo) (id Id) {
 	return
 }
 
-func RegisterRuntime(name string, pointer interface{}, info RuntimeComponentInfo) (id Id) {
+// RegisterRuntime register runtime component type
+func RegisterRuntime(name string, pointer interface{}, info RuntimeComponentInfo) (id types.ID) {
 	t := reflect.TypeOf(pointer).Elem()
-	id = Id(len(runtime_registry))
-	runtime_registry = append(runtime_registry, &RuntimeComponent{
-		Id:   id,
+	id = types.ID(len(runtimeRegistry))
+	runtimeRegistry = append(runtimeRegistry, &RuntimeComponent{
+		id:   id,
 		Type: t,
 		Name: name,
 		Info: info,
@@ -72,30 +77,36 @@ func RegisterRuntime(name string, pointer interface{}, info RuntimeComponentInfo
 	return
 }
 
-func GetById(id Id) *Component {
+// GetByID get component by id
+func GetByID(id types.ID) *Component {
 	return registry[id]
 }
 
-func GetByName(name string) (Id, *Component) {
+// GetByName get component by name
+func GetByName(name string) (types.ID, *Component) {
 	if id, ok := index[name]; ok {
 		return id, registry[id]
 	}
 	return 0, nil
 }
 
-func GetRuntimeById(id Id) *RuntimeComponent {
-	return runtime_registry[id]
+// GetRuntimeByID get runtime component by id
+func GetRuntimeByID(id types.ID) *RuntimeComponent {
+	return runtimeRegistry[id]
 }
 
-func GetRuntimeByName(name string) (Id, *RuntimeComponent) {
-	if id, ok := runtime_index[name]; ok {
-		return id, runtime_registry[id]
+// GetRuntimeByName get runtime component by name
+func GetRuntimeByName(name string) (types.ID, *RuntimeComponent) {
+	if id, ok := runtimeIndex[name]; ok {
+		return id, runtimeRegistry[id]
 	}
 	return 0, nil
 }
 
-type ComponentSet map[*Component]Id
+// ComponentSet set for components
+type ComponentSet map[*Component]types.ID
 
+// Has check set has components
 func (set ComponentSet) Has(comps ...*Component) bool {
 	for _, comp := range comps {
 		if _, ok := set[comp]; !ok {
@@ -105,12 +116,13 @@ func (set ComponentSet) Has(comps ...*Component) bool {
 	return true
 }
 
-var actor_cache map[reflect.Type]ComponentSet
-var actor_cache_send map[reflect.Type]ComponentSet
+var actorCache map[reflect.Type]ComponentSet
+var actorCacheSend map[reflect.Type]ComponentSet
 
+// GetComponentSetForSend get components for send
 func GetComponentSetForSend(act actor.Actor) ComponentSet {
 	t := reflect.TypeOf(act)
-	if ret, ok := actor_cache_send[t]; ok {
+	if ret, ok := actorCacheSend[t]; ok {
 		return ret
 	}
 	ret := make(ComponentSet)
@@ -120,25 +132,27 @@ func GetComponentSetForSend(act actor.Actor) ComponentSet {
 			ret[comp] = id
 		}
 	}
-	actor_cache_send[t] = ret
+	actorCacheSend[t] = ret
 	return ret
 }
 
+// GetComponentSet get components
 func GetComponentSet(act actor.Actor) ComponentSet {
 	t := reflect.TypeOf(act)
-	if ret, ok := actor_cache[t]; ok {
+	if ret, ok := actorCache[t]; ok {
 		return ret
 	}
 	ret := make(ComponentSet)
 	for id, comp := range registry {
 		if comp.Info != nil && t.Implements(comp.Type) {
-			ret[comp] = Id(id)
+			ret[comp] = types.ID(id)
 		}
 	}
-	actor_cache[t] = ret
+	actorCache[t] = ret
 	return ret
 }
 
+// DescribeComponents describe components
 func DescribeComponents(o packed.Output) {
 	o.WriteVarUint32(uint32(len(registry)))
 	for _, comp := range registry {
@@ -146,6 +160,7 @@ func DescribeComponents(o packed.Output) {
 	}
 }
 
+// SaveActor save actor
 func SaveActor(o packed.Output, act actor.Actor) {
 	set := GetComponentSet(act)
 	o.WriteVarUint32(uint32(len(set)))
@@ -155,13 +170,13 @@ func SaveActor(o packed.Output, act actor.Actor) {
 	}
 	count := uint32(0)
 	for id := range act.RuntimeComponentMap() {
-		if info := runtime_registry[id].Info; info != nil {
+		if info := runtimeRegistry[id].Info; info != nil {
 			count++
 		}
 	}
 	o.WriteVarUint32(count)
 	for id, comp := range act.RuntimeComponentMap() {
-		entry := runtime_registry[id]
+		entry := runtimeRegistry[id]
 		if info := entry.Info; info != nil {
 			o.WriteString(entry.Name)
 			info.SaveComponent(o, comp)
@@ -169,22 +184,23 @@ func SaveActor(o packed.Output, act actor.Actor) {
 	}
 }
 
+// SendActor send actor
 func SendActor(o packed.Output, act actor.Actor) {
 	set := GetComponentSetForSend(act)
 	o.WriteVarUint32(uint32(len(set)))
 	for comp := range set {
-		o.WriteUint32(uint32(comp.Id))
+		o.WriteUint32(uint32(comp.id))
 		comp.Info.SaveComponent(o, act)
 	}
 	count := uint32(0)
 	for id := range act.RuntimeComponentMap() {
-		if info := runtime_registry[id].Info; info != nil && !info.Secure() {
+		if info := runtimeRegistry[id].Info; info != nil && !info.Secure() {
 			count++
 		}
 	}
 	o.WriteVarUint32(count)
 	for id, comp := range act.RuntimeComponentMap() {
-		if info := runtime_registry[id].Info; info != nil && !info.Secure() {
+		if info := runtimeRegistry[id].Info; info != nil && !info.Secure() {
 			o.WriteVarUint32(uint32(id))
 			info.SaveComponent(o, comp)
 			count--
@@ -195,6 +211,7 @@ func SendActor(o packed.Output, act actor.Actor) {
 	}
 }
 
+// LoadActor load actor
 func LoadActor(i packed.Input, act actor.Actor) {
 	log := logprefix.Get("[component loader] ")
 	set := GetComponentSet(act)

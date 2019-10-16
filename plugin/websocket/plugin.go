@@ -22,25 +22,32 @@ import (
 	"nhooyr.io/websocket"
 )
 
-var PluginId string = "core:network:websocket"
+// PluginID plugin id
+var PluginID string = "core:network:websocket"
+
+// Dependencies plugin dependencies
 var Dependencies = []string{}
 
+// PluginMain plugin main
 func PluginMain(i plug.PluginInterface) error {
 	i.RegisterNetworkProtocol("ws", creator)
 	i.RegisterNetworkProtocol("ws+unix", creator)
 	return nil
 }
 
-var ESchemeError = errors.New("Invalied scheme")
+// ErrInvalidScheme Invalied scheme
+var ErrInvalidScheme = errors.New("Invalied scheme")
 
+// Server websocket server
 type Server struct {
 	source  *http.Server
 	fetcher chan network.ClientInstance
 }
 
+// Client websocket client
 type Client struct {
 	source   *websocket.Conn
-	identify network.CommonNetworkIdentifier
+	identify network.CommonIdentifier
 	fetcher  chan packet.ReceiveOnlyPacket
 	cancel   func()
 	mtx      *sync.Mutex
@@ -52,6 +59,7 @@ var bufpool = sync.Pool{
 	},
 }
 
+// SendPacket send packet
 func (c Client) SendPacket(pkt packet.SendOnlyPacket) (err error) {
 	defer func() {
 		if e := recover(); e != nil {
@@ -69,15 +77,23 @@ func (c Client) SendPacket(pkt packet.SendOnlyPacket) (err error) {
 	err = c.source.Write(context.TODO(), websocket.MessageBinary, buf.Bytes())
 	return
 }
-func (c Client) GetFetcher() <-chan packet.ReceiveOnlyPacket { return c.fetcher }
-func (c Client) Disconnect()                                 { c.cancel() }
-func (c Client) GetIdentifier() network.NetworkIdentifier    { return c.identify }
 
+// GetFetcher get fetch for packet
+func (c Client) GetFetcher() <-chan packet.ReceiveOnlyPacket { return c.fetcher }
+
+// Disconnect kick client
+func (c Client) Disconnect() { c.cancel() }
+
+// GetIdentifier get network identifier
+func (c Client) GetIdentifier() network.Identifier { return c.identify }
+
+// Stop stop the server
 func (s Server) Stop() {
 	close(s.fetcher)
 	s.source.Close()
 }
 
+// GetFetcher get client fetcher
 func (s Server) GetFetcher() <-chan network.ClientInstance { return s.fetcher }
 
 var opts = &websocket.AcceptOptions{
@@ -87,7 +103,7 @@ var opts = &websocket.AcceptOptions{
 
 type privdata struct{}
 
-func getCommonNetworkIdentifier(req *http.Request) (id network.CommonNetworkIdentifier) {
+func getCommonNetworkIdentifier(req *http.Request) (id network.CommonIdentifier) {
 	xForwardedFor := req.Header.Get("X-Forwarded-For")
 	ip := strings.TrimSpace(strings.Split(xForwardedFor, ",")[0])
 	if len(ip) != 0 {
@@ -177,7 +193,7 @@ func creator(u *url.URL) (network.Server, error) {
 		listener, err = net.Listen("tcp", u.Host)
 		usePath = true
 	default:
-		return nil, ESchemeError
+		return nil, ErrInvalidScheme
 	}
 	if err != nil {
 		return nil, err
